@@ -751,8 +751,8 @@
   initial(VE_seroneg1n[1:NYO]) <-0
   initial(VE_seroneg1p[1:NYO]) <-0
   
-  update(VE_seroneg1n[1:NYO]) <- if(out_update_switch[i]==0) VE_seroneg1n[i] else RR_dis[1,1,as.integer(vca)+i-1]
-  update(VE_seroneg1p[1:NYO]) <- if(out_update_switch[i]==0) VE_seroneg1p[i] else RR_dis[1,2,as.integer(vca)+i-1]
+  update(VE_seroneg1n[1:NYO]) <- if(out_update_switch[i]==0||(vca+i-1)>N_age) VE_seroneg1n[i] else RR_dis[1,1,as.integer(vca)+i-1]
+  update(VE_seroneg1p[1:NYO]) <- if(out_update_switch[i]==0||(vca+i-1)>N_age) VE_seroneg1p[i] else RR_dis[1,2,as.integer(vca)+i-1]
   
   ## seropositive at 9 and vacc age- outputs cumulative average over first n (1-20) years of vacc period
   

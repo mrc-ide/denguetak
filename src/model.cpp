@@ -4649,10 +4649,10 @@ public:
       }
     }
     for (int i = 1; i <= shared->NYO; ++i) {
-      state_next[shared->offset_variable_VE_seroneg1n + i - 1] = (internal.out_update_switch[i - 1] == 0 ? VE_seroneg1n[i - 1] : internal.RR_dis[shared->dim_RR_dis_12 * (static_cast<int>(shared->vca) + i - 1 - 1) + shared->dim_RR_dis_1 * 0 + 0]);
+      state_next[shared->offset_variable_VE_seroneg1n + i - 1] = (internal.out_update_switch[i - 1] == 0 || (shared->vca + i - 1) > shared->N_age ? VE_seroneg1n[i - 1] : internal.RR_dis[shared->dim_RR_dis_12 * (static_cast<int>(shared->vca) + i - 1 - 1) + shared->dim_RR_dis_1 * 0 + 0]);
     }
     for (int i = 1; i <= shared->NYO; ++i) {
-      state_next[shared->offset_variable_VE_seroneg1p + i - 1] = (internal.out_update_switch[i - 1] == 0 ? VE_seroneg1p[i - 1] : internal.RR_dis[shared->dim_RR_dis_12 * (static_cast<int>(shared->vca) + i - 1 - 1) + shared->dim_RR_dis_1 * 1 + 0]);
+      state_next[shared->offset_variable_VE_seroneg1p + i - 1] = (internal.out_update_switch[i - 1] == 0 || (shared->vca + i - 1) > shared->N_age ? VE_seroneg1p[i - 1] : internal.RR_dis[shared->dim_RR_dis_12 * (static_cast<int>(shared->vca) + i - 1 - 1) + shared->dim_RR_dis_1 * 1 + 0]);
     }
     for (int i = 1; i <= shared->N_age; ++i) {
       int j = 1;
