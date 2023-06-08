@@ -1,0 +1,27 @@
+{
+    "args": [
+        "-std=gnu++17",
+        "-IC:/PROGRA~1/R/R-43~1.0/include",
+        "-DNDEBUG",
+        "-ffast-math",
+        "-fopenmp",
+        "-IC:/Users/fergnm/AppData/Local/R/win-library/4.3/cpp11/include",
+        "-IC:/Users/fergnm/AppData/Local/R/win-library/4.3/dust/include",
+        "-DEIGEN_DONT_VECTORIZE",
+        "-nostdinc",
+        "-Ic:/rtools43/x86_64-w64-mingw32.static.posix/bin/../lib/gcc/x86_64-w64-mingw32.static.posix/12.2.0/include/c++",
+        "-Ic:/rtools43/x86_64-w64-mingw32.static.posix/bin/../lib/gcc/x86_64-w64-mingw32.static.posix/12.2.0/include/c++/x86_64-w64-mingw32.static.posix",
+        "-Ic:/rtools43/x86_64-w64-mingw32.static.posix/bin/../lib/gcc/x86_64-w64-mingw32.static.posix/12.2.0/include/c++/backward",
+        "-Ic:/rtools43/x86_64-w64-mingw32.static.posix/bin/../lib/gcc/x86_64-w64-mingw32.static.posix/12.2.0/include",
+        "-Ic:/rtools43/x86_64-w64-mingw32.static.posix/bin/../lib/gcc/x86_64-w64-mingw32.static.posix/12.2.0/../../../../include",
+        "-Ic:/rtools43/x86_64-w64-mingw32.static.posix/bin/../lib/gcc/x86_64-w64-mingw32.static.posix/12.2.0/include-fixed",
+        "-include",
+        "V:/Neil/WHO_2023/denguetak/.Rproj.user/8ED6BF2B/compilation-database/mingw64/cpp-definitions.h"
+    ],
+    "pch": "cpp11",
+    "is_cpp": true,
+    "hash": "161418604816862129061686153349",
+    "compiler": "4947574074073276986",
+    "rversion": "4.3.0",
+    "dbversion": 4
+}
