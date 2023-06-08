@@ -79,16 +79,18 @@
   
   ## facility exists to have different coverage by serostatus (i.e. to model testing)
   ## variable controlling whether vaccination can vary by serostatus (0=no, 1=yes)
-  vacc_by_serostatus <- 0
-  vacc_child_coverage <- gavi_cov ## seropos cov (also default if vacc_by_serostatus==0)
-  vacc_child_coverage_S <- gavi_cov ## seroneg cov
+  vacc_by_serostatus <- user()
+  sero_test_sens <-0.8
+  sero_test_spec <- 0.98
+  vacc_child_coverage <- if(vacc_by_serostatus==1) gavi_cov*sero_test_sens else gavi_cov
+  vacc_child_coverage_S <- if(vacc_by_serostatus==1) gavi_cov*(1-sero_test_spec) else gavi_cov
   
   ## catch-up age range. If over N_age then no catch-up
   vacc_cu_minage <- N_age_p1
   vacc_cu_maxage <- N_age_p1
   ## catch-up coverage, again by serostatus
-  vacc_cu_coverage <- 0.0 ## seropos
-  vacc_cu_coverage_S <- 0.0 ##seroneg
+  vacc_cu_coverage <- 0.0
+  vacc_cu_coverage_S <- 0.0
   ## year of catch-up campaign - normally on the same year that routine starts
   vacc_cu_time <- vacc_child_starttime
   ## rounded version of vacc_cu_time so that it happens during a time step when aging happens
@@ -268,11 +270,9 @@
   vcu_noncov[1:N_age,2:3] <- 1
   
   ## now seronegatives
-  vcov_c_S <- if(vacc_by_serostatus == 0) vacc_child_coverage_S else vacc_child_coverage
-  vcov_cu_S <- if(vacc_by_serostatus == 0) vacc_cu_coverage_S else vacc_cu_coverage
-  vacc_noncov_S[1:N_age_p1,1] <- (if((YEARS_POST_VACC>=0) && (YEAR<vacc_child_stoptime) && (i-1 == vacc_child_age)) (1-vcov_c_S) else 1)
+  vacc_noncov_S[1:N_age_p1,1] <- (if((YEARS_POST_VACC>=0) && (YEAR<vacc_child_stoptime) && (i-1 == vacc_child_age)) (1-vacc_child_coverage_S) else 1)
   vacc_noncov_S[1:N_age_p1,2:3] <- 1
-  vcu_noncov_S[1:N_age,1] <- (if((TIME == vacc_cu_rndtime) && (i >= vacc_cu_minage) && (i <= vacc_cu_maxage)) (1-vcov_cu_S)*vacc_cu_age_weight[i] else 1)
+  vcu_noncov_S[1:N_age,1] <- (if((TIME == vacc_cu_rndtime) && (i >= vacc_cu_minage) && (i <= vacc_cu_maxage)) (1-vacc_cu_coverage_S)*vacc_cu_age_weight[i] else 1)
   vcu_noncov_S[1:N_age,2:3] <- 1
   
   

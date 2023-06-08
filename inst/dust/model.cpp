@@ -64,6 +64,7 @@ __host__ __device__ real_type odin_sum3(const container x, int from_i, int to_i,
 // [[dust::param(sdis_tert, has_default = FALSE, default_value = NULL, rank = 1, min = -Inf, max = Inf, integer = FALSE)]]
 // [[dust::param(sigma, has_default = FALSE, default_value = NULL, rank = 0, min = -Inf, max = Inf, integer = FALSE)]]
 // [[dust::param(ts, has_default = FALSE, default_value = NULL, rank = 1, min = -Inf, max = Inf, integer = FALSE)]]
+// [[dust::param(vacc_by_serostatus, has_default = FALSE, default_value = NULL, rank = 0, min = -Inf, max = Inf, integer = FALSE)]]
 // [[dust::param(VACC_END_YEAR, has_default = FALSE, default_value = NULL, rank = 0, min = -Inf, max = Inf, integer = FALSE)]]
 // [[dust::param(VACC_YEAR, has_default = FALSE, default_value = NULL, rank = 0, min = -Inf, max = Inf, integer = FALSE)]]
 // [[dust::param(VaccOn, has_default = FALSE, default_value = NULL, rank = 0, min = -Inf, max = Inf, integer = FALSE)]]
@@ -1846,6 +1847,8 @@ public:
     std::vector<real_type> sdis_quart;
     std::vector<real_type> sdis_sec;
     std::vector<real_type> sdis_tert;
+    real_type sero_test_sens;
+    real_type sero_test_spec;
     real_type sigma;
     std::vector<real_type> suscinitpop;
     std::vector<real_type> ts;
@@ -1867,7 +1870,6 @@ public:
     real_type VaccRoutineAge;
     real_type vaccS_decay;
     real_type vca;
-    real_type vcov_cu_S;
     real_type Wb_cyto;
     real_type Wb_eff;
     real_type Wb_fF;
@@ -2756,7 +2758,7 @@ public:
     }
     for (int i = 1; i <= shared->N_age; ++i) {
       int j = 1;
-      internal.vcu_noncov_S[i - 1 + shared->dim_vcu_noncov_S_1 * (j - 1)] = (((TIME == shared->vacc_cu_rndtime) && (i >= shared->vacc_cu_minage) && (i <= shared->vacc_cu_maxage) ? (1 - shared->vcov_cu_S) * shared->vacc_cu_age_weight[i - 1] : 1));
+      internal.vcu_noncov_S[i - 1 + shared->dim_vcu_noncov_S_1 * (j - 1)] = (((TIME == shared->vacc_cu_rndtime) && (i >= shared->vacc_cu_minage) && (i <= shared->vacc_cu_maxage) ? (1 - shared->vacc_cu_coverage_S) * shared->vacc_cu_age_weight[i - 1] : 1));
     }
     for (int i = 1; i <= shared->N_age; ++i) {
       for (int j = 2; j <= 3; ++j) {
@@ -2807,8 +2809,8 @@ public:
     }
     state_next[25] = prop_seroneg_at_9;
     state_next[26] = prop_seroneg_at_vca;
-    real_type vacc_child_coverage = gavi_cov;
-    real_type vacc_child_coverage_S = gavi_cov;
+    real_type vacc_child_coverage = (shared->vacc_by_serostatus == 1 ? gavi_cov * shared->sero_test_sens : gavi_cov);
+    real_type vacc_child_coverage_S = (shared->vacc_by_serostatus == 1 ? gavi_cov * (1 - shared->sero_test_spec) : gavi_cov);
     for (int i = 1; i <= shared->N_age; ++i) {
       internal.FOI1a[i - 1] = shared->FOIas[i - 1] * FOI1;
     }
@@ -3015,7 +3017,15 @@ public:
         internal.vacc_noncov[i - 1 + shared->dim_vacc_noncov_1 * (j - 1)] = 1;
       }
     }
-    real_type vcov_c_S = (shared->vacc_by_serostatus == 0 ? vacc_child_coverage_S : vacc_child_coverage);
+    for (int i = 1; i <= shared->N_age_p1; ++i) {
+      int j = 1;
+      internal.vacc_noncov_S[i - 1 + shared->dim_vacc_noncov_S_1 * (j - 1)] = (((YEARS_POST_VACC >= 0) && (YEAR < shared->vacc_child_stoptime) && (i - 1 == shared->vacc_child_age) ? (1 - vacc_child_coverage_S) : 1));
+    }
+    for (int i = 1; i <= shared->N_age_p1; ++i) {
+      for (int j = 2; j <= 3; ++j) {
+        internal.vacc_noncov_S[i - 1 + shared->dim_vacc_noncov_S_1 * (j - 1)] = 1;
+      }
+    }
     real_type Lwb_mature = (shared->DT * shared->epsilon / (real_type) (shared->DT * shared->epsilon + L_deathrt)) * (O_Lwb);
     real_type Lwt_mature = (shared->DT * shared->epsilon / (real_type) (shared->DT * shared->epsilon + L_deathrt)) * (O_Lwt);
     real_type Mwt_FOI1 = shared->DT * shared->Beta_hm_1 * shared->kappa * infectious1;
@@ -3196,15 +3206,6 @@ public:
     state_next[24] = NTvE;
     for (int i = 1; i <= shared->N_age; ++i) {
       state_next[47 + i - 1] = internal.time_from_last_dose[i - 1];
-    }
-    for (int i = 1; i <= shared->N_age_p1; ++i) {
-      int j = 1;
-      internal.vacc_noncov_S[i - 1 + shared->dim_vacc_noncov_S_1 * (j - 1)] = (((YEARS_POST_VACC >= 0) && (YEAR < shared->vacc_child_stoptime) && (i - 1 == shared->vacc_child_age) ? (1 - vcov_c_S) : 1));
-    }
-    for (int i = 1; i <= shared->N_age_p1; ++i) {
-      for (int j = 2; j <= 3; ++j) {
-        internal.vacc_noncov_S[i - 1 + shared->dim_vacc_noncov_S_1 * (j - 1)] = 1;
-      }
     }
     for (int i = 2; i <= shared->N_age_p1; ++i) {
       for (int j = 1; j <= 3; ++j) {
@@ -7104,7 +7105,8 @@ dust::pars_type<model> dust_pars<model>(cpp11::list user) {
   shared->rho_quart = 1;
   shared->rho_sec = 1;
   shared->rho_tert = 1;
-  shared->vacc_by_serostatus = 0;
+  shared->sero_test_sens = static_cast<real_type>(0.80000000000000004);
+  shared->sero_test_spec = static_cast<real_type>(0.97999999999999998);
   shared->vacc_cu_coverage = 0;
   shared->vacc_cu_coverage_S = 0;
   shared->vacc_decay = 0;
@@ -8000,7 +8002,6 @@ dust::pars_type<model> dust_pars<model>(cpp11::list user) {
   shared->dim_yll_sero_vacc_pri_1 = shared->N_age;
   shared->dim_yll_sero_vacc_pri_2 = 4;
   shared->N_age_p1 = shared->N_age + 1;
-  shared->vcov_cu_S = (shared->vacc_by_serostatus == 0 ? shared->vacc_cu_coverage_S : shared->vacc_cu_coverage);
   shared->Wb_relsusc1 = 1 - shared->Wb_eff;
   shared->Wb_relsusc2 = 1 - shared->Wb_eff;
   shared->Wb_relsusc3 = 1 - shared->Wb_eff;
@@ -9585,6 +9586,7 @@ dust::pars_type<model> dust_pars<model>(cpp11::list user) {
   shared->Rel_R04 = NA_REAL;
   shared->Rm = NA_REAL;
   shared->sigma = NA_REAL;
+  shared->vacc_by_serostatus = NA_REAL;
   shared->VACC_END_YEAR = NA_REAL;
   shared->VACC_YEAR = NA_REAL;
   shared->VaccOn = NA_REAL;
@@ -9626,6 +9628,7 @@ dust::pars_type<model> dust_pars<model>(cpp11::list user) {
   shared->Rel_R04 = user_get_scalar<real_type>(user, "Rel_R04", shared->Rel_R04, NA_REAL, NA_REAL);
   shared->Rm = user_get_scalar<real_type>(user, "Rm", shared->Rm, NA_REAL, NA_REAL);
   shared->sigma = user_get_scalar<real_type>(user, "sigma", shared->sigma, NA_REAL, NA_REAL);
+  shared->vacc_by_serostatus = user_get_scalar<real_type>(user, "vacc_by_serostatus", shared->vacc_by_serostatus, NA_REAL, NA_REAL);
   shared->VACC_END_YEAR = user_get_scalar<real_type>(user, "VACC_END_YEAR", shared->VACC_END_YEAR, NA_REAL, NA_REAL);
   shared->VACC_YEAR = user_get_scalar<real_type>(user, "VACC_YEAR", shared->VACC_YEAR, NA_REAL, NA_REAL);
   shared->VaccOn = user_get_scalar<real_type>(user, "VaccOn", shared->VaccOn, NA_REAL, NA_REAL);
