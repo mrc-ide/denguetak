@@ -45,6 +45,7 @@
   VaccOn <- user() ## 1 if vaccination, 0 if not
   VaccRoutineAge <- user()
   ZeroVE <- user() ## 1 for zero VE, 1 for standard VE model
+  DoVEInf <- user() ## 1 for VE against inf, 0 for against disease
   
   vca <- VaccRoutineAge ## age at routine vacc (<20, assuming current age structure)
   
@@ -316,9 +317,9 @@
   RR_dis_cu[1:4,1:2,1:N_age] <- if((ageb[k]>=youngest_cu_age) && (ageb[k]<=oldest_cu_age)) L_dis[i,j]/(1+(nc_cu[i,j]/nc50_dis[i,j]*nc50_age[k])^ws[i]) else 1
   RR_sdis_cu[1:4,1:2,1:N_age] <- if((ageb[k]>=youngest_cu_age) && (ageb[k]<=oldest_cu_age)) L_sdis[i,j]/(1+(nc_cu[i,j]/nc50_sdis[i,j]*nc50_age[k])^ws[i]) else 1
   
-  RR_inf[1:4,1:2,1:N_age] <- if(ZeroVE==1) 1 else 1
-  RR_dis[1:4,1:2,1:N_age] <- if(ZeroVE==1) 1 else RR_dis_vc[i,j,k]*RR_dis_cu[i,j,k] ## currently assume VE against disease, then additional against severe disease
-  RR_sdis[1:4,1:2,1:N_age] <- if(ZeroVE==1) 1 else RR_dis[i,j,k]*RR_sdis_vc[i,j,k]*RR_sdis_cu[i,j,k]
+  RR_inf[1:4,1:2,1:N_age] <- if(ZeroVE==1) 1 else if(DoVEInf) RR_dis_vc[i,j,k]*RR_dis_cu[i,j,k] else 1
+  RR_dis[1:4,1:2,1:N_age] <- if(ZeroVE==1) 1 else if(DoVEInf) 1 else RR_dis_vc[i,j,k]*RR_dis_cu[i,j,k] 
+  RR_sdis[1:4,1:2,1:N_age] <- if(ZeroVE==1) 1 else if(DoVEInf) RR_sdis_vc[i,j,k]*RR_sdis_cu[i,j,k] else RR_dis[i,j,k]*RR_sdis_vc[i,j,k]*RR_sdis_cu[i,j,k]
   
   initial(out_RR[1:4,1:2,1:N_age]) <- 0
   update(out_RR[1:4,1:2,1:N_age]) <- RR_dis[i,j,k]
