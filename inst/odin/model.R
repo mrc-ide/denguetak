@@ -63,9 +63,9 @@
   gavi_cov <- if( VaccOn == 0 || YEARS_POST_VACC<0 || YEARS_POST_VACC>VACC_END_YEAR-VACC_YEAR) 0 else coverage_d[as.integer(cov_year),2]
   
   ## new vaccine efficacy model params
-  nc0[,] <- user() # Ab at t=0 (by serotype and serostatus)
-  hs[] <- user() # Ab fast half-life (by serostatus)
-  hl[] <- user() # Ab slow half-life (by serostatus)
+  nc0[,] <- user() # Ab at t=0 (by serotype and serostatus) - includes 1/(exp(-ts[j]*hs[j])+exp(-ts[j]*hl[j])) factor
+  hs[] <- user() # Ab fast decay rate (by serostatus) - rate not half life
+  hl[] <- user() # Ab slow decay rate (by serostatus)
   ts[] <- user() # Ab decay fast-slow transition time (by serostatus)
   nc50_dis[,] <- user() # Ab n50 for dis (by serotype and serostatus)
   nc50_sdis[,] <- user() # Ab n50 for sdis (by serotype and serostatus)
@@ -280,8 +280,9 @@
   ## ve_cu_time and ve_child_time are 1 immediately after vaccination, but are multiplied by ve_pri_param etc
 
   ## complicated if clause represents 2 doses at 0 and 3 months (for Takeda)
-  cu_time_from_last_dose <- if(TIME<vacc_cu_rndtime+YL/4) (TIME-vacc_cu_rndtime) else if(TIME>=vacc_cu_rndtime+YL/4) (TIME-vacc_cu_rndtime-YL/4) else 0
-
+  cu_time_from_last_dose_base <- if(TIME<vacc_cu_rndtime+YL/4) (TIME-vacc_cu_rndtime) else if(TIME>=vacc_cu_rndtime+YL/4) (TIME-vacc_cu_rndtime-YL/4) else 0
+  cu_time_from_last_dose <- if(cu_time_from_last_dose_base>max_ve_decay_time) max_ve_decay_time else cu_time_from_last_dose_base
+  
   youngest_cu_age <- if(vacc_cu_minage<=N_age) ageb[as.integer(vacc_cu_minage+1)]+floor(YEAR-vacc_cu_time) else 1000
   oldest_cu_age <- if(vacc_cu_minage<=N_age) ageb[as.integer(vacc_cu_maxage+1)]+floor(YEAR-vacc_cu_time) else 1000
   
@@ -296,14 +297,14 @@
   initial(out_time_from_last_dose[1:N_age]) <- 0
   update(out_time_from_last_dose[1:N_age]) <- time_from_last_dose[i]
   dim(out_time_from_last_dose) <- N_age
-  
+
   ### time varying VE (RR)
   
   ####  following only works if cu campaign targets children older than routine campaign
   
 
-  nc[1:4,1:3,1:N_age] <- nc0[i,j] * (1/(2^(time_from_last_dose[k]/hs[j]+ts[j]/hl[j]))+1/(2^(time_from_last_dose[k]/hl[j]+ts[j]/hs[j])))/(1/(2^(ts[j]/hl[j]))+1/(2^(ts[j]/hs[j])))
-  nc_cu[1:4,1:3] <- nc0[i,j] * (1/(2^(cu_time_from_last_dose/hs[j]+ts[j]/hl[j]))+1/(2^(-cu_time_from_last_dose/hl[j]+ts[j]/hs[j])))/(1/(2^(ts[j]/hl[j]))+1/(2^(-ts[j]/hs[j])))
+  nc[1:4,1:3,1:N_age] <- nc0[i,j] * (exp(-time_from_last_dose[k]*hs[j]-ts[j]*hl[j])+exp(-time_from_last_dose[k]*hl[j]-ts[j]*hs[j]))
+  nc_cu[1:4,1:3] <- nc0[i,j] *  (exp(-cu_time_from_last_dose*hs[j]-ts[j]*hl[j])+exp(-cu_time_from_last_dose*hl[j]-ts[j]*hs[j]))
   
   initial(out_nc[1:4,1:3,1:N_age]) <- 0
   update(out_nc[1:4,1:3,1:N_age]) <- nc[i,j,k]
