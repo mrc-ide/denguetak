@@ -1760,14 +1760,14 @@
   dim(life_expec_d) <-  c(151,29)
   dim(coverage_d) <- c(77,2)
   
-  dim(nc0) <- c(4,2)
-  dim(hs) <- 2
-  dim(hl) <- 2
-  dim(ts) <- 2
-  dim(nc50_dis) <- c(4,2)
-  dim(nc50_sdis) <- c(4,2)
-  dim(L_dis) <- c(4,2)
-  dim(L_sdis) <- c(4,2)
+  dim(nc0) <- c(4,3)
+  dim(hs) <- 3
+  dim(hl) <- 3
+  dim(ts) <- 3
+  dim(nc50_dis) <- c(4,3)
+  dim(nc50_sdis) <- c(4,3)
+  dim(L_dis) <- c(4,3)
+  dim(L_sdis) <- c(4,3)
   dim(ws) <- 4
   dim(nc50_age) <- N_age
   
