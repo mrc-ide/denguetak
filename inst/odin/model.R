@@ -72,9 +72,8 @@
   L_dis[,] <- user() # enhancement for symp dis (by serotype and serostatus)
   L_sdis[,] <- user() # enhancement for severe dis or hosp (by serotype and serostatus)
   ws[] <- user() # Ab dose response slope param (by serotype)
-  nc50_age_intercept <- user()
-  nc50_age_slope <- user()
-  nc50_age[1:N_age] <- if(i<5) 1 else exp(-nc50_age_intercept + nc50_age_slope/(ageb[i]+agec[i]/2))
+  nc50_age_under6 <- user()
+  nc50_age[1:N_age] <- if(i<6) exp(nc50_age_under6) else 1
   max_ve_decay_time <- user() # how long (days) to let VE decline
   
   ## facility exists to have different coverage by serostatus (i.e. to model testing)
@@ -299,31 +298,37 @@
   dim(out_time_from_last_dose) <- N_age
   
   ### time varying VE (RR)
-
-  nc[1:4,1:2,1:N_age] <- nc0[i,j] * (1/(2^(time_from_last_dose[k]/hs[j]+ts[j]/hl[j]))+1/(2^(time_from_last_dose[k]/hl[j]+ts[j]/hs[j])))/(1/(2^(ts[j]/hl[j]))+1/(2^(ts[j]/hs[j])))
-  RR_dis_vc[1:4,1:2,1:N_age] <- L_dis[i,j]/(1+(nc[i,j,k]/(nc50_dis[i,j]*nc50_age[k]))^ws[i])
-  RR_sdis_vc[1:4,1:2,1:N_age] <- L_sdis[i,j]/(1+(nc[i,j,k]/(nc50_sdis[i,j]*nc50_age[k]))^ws[i])
   
-  initial(out_nc[1:4,1:2,1:N_age]) <- 0
-  update(out_nc[1:4,1:2,1:N_age]) <- nc[i,j,k]
-  dim(out_nc) <- c(4,2,N_age)
-
   ####  following only works if cu campaign targets children older than routine campaign
   
+
+  nc[1:4,1:3,1:N_age] <- nc0[i,j] * (1/(2^(time_from_last_dose[k]/hs[j]+ts[j]/hl[j]))+1/(2^(time_from_last_dose[k]/hl[j]+ts[j]/hs[j])))/(1/(2^(ts[j]/hl[j]))+1/(2^(ts[j]/hs[j])))
+  nc_cu[1:4,1:3] <- nc0[i,j] * (1/(2^(cu_time_from_last_dose/hs[j]+ts[j]/hl[j]))+1/(2^(-cu_time_from_last_dose/hl[j]+ts[j]/hs[j])))/(1/(2^(ts[j]/hl[j]))+1/(2^(-ts[j]/hs[j])))
+  
+  initial(out_nc[1:4,1:3,1:N_age]) <- 0
+  update(out_nc[1:4,1:3,1:N_age]) <- nc[i,j,k]
+  dim(out_nc) <- c(4,3,N_age)
+  
   ## relative risks of infection, disease and severe disease in vaccinated people
-  ## note that RR_dis = RR(dis|inf), implictly
+  ## note that RR_dis = RR(dis|inf), implicitly
   
-  nc_cu[1:4,1:2] <- nc0[i,j] * (1/(2^(cu_time_from_last_dose/hs[j]+ts[j]/hl[j]))+1/(2^(-cu_time_from_last_dose/hl[j]+ts[j]/hs[j])))/(1/(2^(ts[j]/hl[j]))+1/(2^(-ts[j]/hs[j])))
-  RR_dis_cu[1:4,1:2,1:N_age] <- if((ageb[k]>=youngest_cu_age) && (ageb[k]<=oldest_cu_age)) L_dis[i,j]/(1+(nc_cu[i,j]/nc50_dis[i,j]*nc50_age[k])^ws[i]) else 1
-  RR_sdis_cu[1:4,1:2,1:N_age] <- if((ageb[k]>=youngest_cu_age) && (ageb[k]<=oldest_cu_age)) L_sdis[i,j]/(1+(nc_cu[i,j]/nc50_sdis[i,j]*nc50_age[k])^ws[i]) else 1
+  RR_inf_vc[1:4,1:3,1:N_age] <- if((ZeroVE==0) && (DoVEInf)) 1/(1+(nc[i,j,k]/(nc50_dis[i,j]*nc50_age[k]))^ws[i]) else 1
+  RR_inf_cu[1:4,1:3,1:N_age] <- if((ZeroVE==0) && (DoVEInf) && (ageb[k]>=youngest_cu_age) && (ageb[k]<=oldest_cu_age)) 1/(1+(nc_cu[i,j]/nc50_dis[i,j]*nc50_age[k])^ws[i]) else 1
   
-  RR_inf[1:4,1:2,1:N_age] <- if(ZeroVE==1) 1 else if(DoVEInf) RR_dis_vc[i,j,k]*RR_dis_cu[i,j,k] else 1
-  RR_dis[1:4,1:2,1:N_age] <- if(ZeroVE==1) 1 else if(DoVEInf) 1 else RR_dis_vc[i,j,k]*RR_dis_cu[i,j,k] 
-  RR_sdis[1:4,1:2,1:N_age] <- if(ZeroVE==1) 1 else if(DoVEInf) RR_sdis_vc[i,j,k]*RR_sdis_cu[i,j,k] else RR_dis[i,j,k]*RR_sdis_vc[i,j,k]*RR_sdis_cu[i,j,k]
+  RR_dis_vc[1:4,1:3,1:N_age] <- if(ZeroVE==1) 1 else if(DoVEInf) L_dis[i,j] else L_dis[i,j]/(1+(nc[i,j,k]/(nc50_dis[i,j]*nc50_age[k]))^ws[i])
+  RR_sdis_vc[1:4,1:3,1:N_age] <- if(ZeroVE==1) 1 else L_sdis[i,j]/(1+(nc[i,j,k]/(nc50_sdis[i,j]*nc50_age[k]))^ws[i])
   
-  initial(out_RR[1:4,1:2,1:N_age]) <- 0
-  update(out_RR[1:4,1:2,1:N_age]) <- RR_dis[i,j,k]
-  dim(out_RR) <- c(4,2,N_age)
+  RR_dis_cu[1:4,1:3,1:N_age] <- if((ZeroVE==1) || (ageb[k]<youngest_cu_age) || (ageb[k]>oldest_cu_age)) 1 else if(DoVEInf) L_dis[i,j] else L_dis[i,j]/(1+(nc_cu[i,j]/nc50_dis[i,j]*nc50_age[k])^ws[i])
+  RR_sdis_cu[1:4,1:3,1:N_age] <- if((ZeroVE==0) && (ageb[k]>=youngest_cu_age) && (ageb[k]<=oldest_cu_age)) L_sdis[i,j]/(1+(nc_cu[i,j]/nc50_sdis[i,j]*nc50_age[k])^ws[i]) else 1
+  
+
+  RR_inf[1:4,1:3,1:N_age] <- RR_inf_vc[i,j,k]*RR_inf_cu[i,j,k]
+  RR_dis[1:4,1:3,1:N_age] <- RR_dis_vc[i,j,k]*RR_dis_cu[i,j,k] 
+  RR_sdis[1:4,1:3,1:N_age] <- if(DoVEInf) RR_sdis_vc[i,j,k]*RR_sdis_cu[i,j,k]/RR_inf[i,j,k] else RR_sdis_vc[i,j,k]*RR_sdis_cu[i,j,k]
+  
+  initial(out_RR[1:4,1:3,1:N_age]) <- 0
+  update(out_RR[1:4,1:3,1:N_age]) <- RR_dis[i,j,k]
+  dim(out_RR) <- c(4,3,N_age)
   
   
   ## rho params are susceptibility to infection
@@ -383,22 +388,22 @@
   rho14[1:N_age,2:3] <- rho_sec*RR_inf[4,2,i]
   rho24[1:N_age,2:3] <- rho_sec*RR_inf[4,2,i]
   rho34[1:N_age,2:3] <- rho_sec*RR_inf[4,2,i]
-  rho231[1:N_age,2:3] <- rho_tert*RR_inf[1,2,i]
-  rho241[1:N_age,2:3] <- rho_tert*RR_inf[1,2,i]
-  rho341[1:N_age,2:3] <- rho_tert*RR_inf[1,2,i]
-  rho132[1:N_age,2:3] <- rho_tert*RR_inf[2,2,i]
-  rho142[1:N_age,2:3] <- rho_tert*RR_inf[2,2,i]
-  rho342[1:N_age,2:3] <- rho_tert*RR_inf[2,2,i]
-  rho123[1:N_age,2:3] <- rho_tert*RR_inf[3,2,i]
-  rho143[1:N_age,2:3] <- rho_tert*RR_inf[3,2,i]
-  rho243[1:N_age,2:3] <- rho_tert*RR_inf[3,2,i]
-  rho124[1:N_age,2:3] <- rho_tert*RR_inf[4,2,i]
-  rho134[1:N_age,2:3] <- rho_tert*RR_inf[4,2,i]
-  rho234[1:N_age,2:3] <- rho_tert*RR_inf[4,2,i]
-  rho2341[1:N_age,2:3] <- rho_quart*RR_inf[1,2,i]
-  rho1342[1:N_age,2:3] <- rho_quart*RR_inf[2,2,i]
-  rho1243[1:N_age,2:3] <- rho_quart*RR_inf[3,2,i]
-  rho1234[1:N_age,2:3] <- rho_quart*RR_inf[4,2,i]
+  rho231[1:N_age,2:3] <- rho_tert*RR_inf[1,3,i]
+  rho241[1:N_age,2:3] <- rho_tert*RR_inf[1,3,i]
+  rho341[1:N_age,2:3] <- rho_tert*RR_inf[1,3,i]
+  rho132[1:N_age,2:3] <- rho_tert*RR_inf[2,3,i]
+  rho142[1:N_age,2:3] <- rho_tert*RR_inf[2,3,i]
+  rho342[1:N_age,2:3] <- rho_tert*RR_inf[2,3,i]
+  rho123[1:N_age,2:3] <- rho_tert*RR_inf[3,3,i]
+  rho143[1:N_age,2:3] <- rho_tert*RR_inf[3,3,i]
+  rho243[1:N_age,2:3] <- rho_tert*RR_inf[3,3,i]
+  rho124[1:N_age,2:3] <- rho_tert*RR_inf[4,3,i]
+  rho134[1:N_age,2:3] <- rho_tert*RR_inf[4,3,i]
+  rho234[1:N_age,2:3] <- rho_tert*RR_inf[4,3,i]
+  rho2341[1:N_age,2:3] <- rho_quart*RR_inf[1,3,i]
+  rho1342[1:N_age,2:3] <- rho_quart*RR_inf[2,3,i]
+  rho1243[1:N_age,2:3] <- rho_quart*RR_inf[3,3,i]
+  rho1234[1:N_age,2:3] <- rho_quart*RR_inf[4,3,i]
   
 
   ## phi params relate to infectiousness
@@ -634,16 +639,16 @@
   
   
   Y1[1:N_age,1] <- phi_pri[1]*(1+dis_pri[1]*phi_ed)*inf_1[i,j]+phi_sec[1]*(1+dis_sec[1]*phi_ed)*(inf_21[i,j]+inf_31[i,j]+inf_41[i,j])+phi_tert[1]*(1+dis_tert[1]*phi_ed)*(inf_231[i,j]+inf_241[i,j]+inf_341[i,j])+phi_quart[1]*(1+dis_quart[1]*phi_ed)*inf_2341[i,j]
-  Y1[1:N_age,2:3] <- phi_pri[1]*(1+dis_pri[1]*RR_dis[1,1,i]*phi_ed)*inf_1[i,j]+phi_sec[1]*(1+dis_sec[1]*RR_dis[1,2,i]*phi_ed)*(inf_21[i,j]+inf_31[i,j]+inf_41[i,j])+phi_tert[1]*(1+dis_tert[1]*RR_dis[1,2,i]*phi_ed)*(inf_231[i,j]+inf_241[i,j]+inf_341[i,j])+phi_quart[1]*(1+dis_quart[1]*RR_dis[1,2,i]*phi_ed)*inf_2341[i,j]
+  Y1[1:N_age,2:3] <- phi_pri[1]*(1+dis_pri[1]*RR_dis[1,1,i]*phi_ed)*inf_1[i,j]+phi_sec[1]*(1+dis_sec[1]*RR_dis[1,2,i]*phi_ed)*(inf_21[i,j]+inf_31[i,j]+inf_41[i,j])+phi_tert[1]*(1+dis_tert[1]*RR_dis[1,3,i]*phi_ed)*(inf_231[i,j]+inf_241[i,j]+inf_341[i,j])+phi_quart[1]*(1+dis_quart[1]*RR_dis[1,3,i]*phi_ed)*inf_2341[i,j]
   
   Y2[1:N_age,1] <- phi_pri[2]*(1+dis_pri[2]*phi_ed)*inf_2[i,j]+phi_sec[2]*(1+dis_sec[2]*phi_ed)*(inf_12[i,j]+inf_32[i,j]+inf_42[i,j])+phi_tert[2]*(1+dis_tert[2]*phi_ed)*(inf_132[i,j]+inf_142[i,j]+inf_342[i,j])+phi_quart[2]*(1+dis_quart[2]*phi_ed)*inf_1342[i,j]
-  Y2[1:N_age,2:3] <- phi_pri[2]*(1+dis_pri[2]*RR_dis[2,1,i]*phi_ed)*inf_2[i,j]+phi_sec[2]*(1+dis_sec[2]*RR_dis[2,2,i]*phi_ed)*(inf_12[i,j]+inf_32[i,j]+inf_42[i,j])+phi_tert[2]*(1+dis_tert[2]*RR_dis[2,2,i]*phi_ed)*(inf_132[i,j]+inf_142[i,j]+inf_342[i,j])+phi_quart[2]*(1+dis_quart[2]*RR_dis[2,2,i]*phi_ed)*inf_1342[i,j]
+  Y2[1:N_age,2:3] <- phi_pri[2]*(1+dis_pri[2]*RR_dis[2,1,i]*phi_ed)*inf_2[i,j]+phi_sec[2]*(1+dis_sec[2]*RR_dis[2,2,i]*phi_ed)*(inf_12[i,j]+inf_32[i,j]+inf_42[i,j])+phi_tert[2]*(1+dis_tert[2]*RR_dis[2,3,i]*phi_ed)*(inf_132[i,j]+inf_142[i,j]+inf_342[i,j])+phi_quart[2]*(1+dis_quart[2]*RR_dis[2,3,i]*phi_ed)*inf_1342[i,j]
   
   Y3[1:N_age,1] <- phi_pri[3]*(1+dis_pri[3]*phi_ed)*inf_3[i,j]+phi_sec[3]*(1+dis_sec[3]*phi_ed)*(inf_13[i,j]+inf_23[i,j]+inf_43[i,j])+phi_tert[3]*(1+dis_tert[3]*phi_ed)*(inf_123[i,j]+inf_143[i,j]+inf_243[i,j])+phi_quart[3]*(1+dis_quart[3]*phi_ed)*inf_1243[i,j]
-  Y3[1:N_age,2:3] <- phi_pri[3]*(1+dis_pri[3]*RR_dis[3,1,i]*phi_ed)*inf_3[i,j]+phi_sec[3]*(1+dis_sec[3]*RR_dis[3,2,i]*phi_ed)*(inf_13[i,j]+inf_23[i,j]+inf_43[i,j])+phi_tert[3]*(1+dis_tert[3]*RR_dis[3,2,i]*phi_ed)*(inf_123[i,j]+inf_143[i,j]+inf_243[i,j])+phi_quart[3]*(1+dis_quart[3]*RR_dis[3,2,i]*phi_ed)*inf_1243[i,j]
+  Y3[1:N_age,2:3] <- phi_pri[3]*(1+dis_pri[3]*RR_dis[3,1,i]*phi_ed)*inf_3[i,j]+phi_sec[3]*(1+dis_sec[3]*RR_dis[3,2,i]*phi_ed)*(inf_13[i,j]+inf_23[i,j]+inf_43[i,j])+phi_tert[3]*(1+dis_tert[3]*RR_dis[3,3,i]*phi_ed)*(inf_123[i,j]+inf_143[i,j]+inf_243[i,j])+phi_quart[3]*(1+dis_quart[3]*RR_dis[3,3,i]*phi_ed)*inf_1243[i,j]
   
   Y4[1:N_age,1] <- phi_pri[4]*(1+dis_pri[4]*phi_ed)*inf_4[i,j]+phi_sec[4]*(1+dis_sec[4]*phi_ed)*(inf_14[i,j]+inf_24[i,j]+inf_34[i,j])+phi_tert[4]*(1+dis_tert[4]*phi_ed)*(inf_124[i,j]+inf_134[i,j]+inf_234[i,j])+phi_quart[4]*(1+dis_quart[4]*phi_ed)*inf_1234[i,j]
-  Y4[1:N_age,2:3] <- phi_pri[4]*(1+dis_pri[4]*RR_dis[4,1,i]*phi_ed)*inf_4[i,j]+phi_sec[4]*(1+dis_sec[4]*RR_dis[4,2,i]*phi_ed)*(inf_14[i,j]+inf_24[i,j]+inf_34[i,j])+phi_tert[4]*(1+dis_tert[4]*RR_dis[4,2,i]*phi_ed)*(inf_124[i,j]+inf_134[i,j]+inf_234[i,j])+phi_quart[4]*(1+dis_quart[4]*RR_dis[4,2,i]*phi_ed)*inf_1234[i,j]
+  Y4[1:N_age,2:3] <- phi_pri[4]*(1+dis_pri[4]*RR_dis[4,1,i]*phi_ed)*inf_4[i,j]+phi_sec[4]*(1+dis_sec[4]*RR_dis[4,2,i]*phi_ed)*(inf_14[i,j]+inf_24[i,j]+inf_34[i,j])+phi_tert[4]*(1+dis_tert[4]*RR_dis[4,3,i]*phi_ed)*(inf_124[i,j]+inf_134[i,j]+inf_234[i,j])+phi_quart[4]*(1+dis_quart[4]*RR_dis[4,3,i]*phi_ed)*inf_1234[i,j]
   
   
   Y1T <- sum(Y1)/NT
@@ -749,11 +754,13 @@
   
   ## VE over time
   
-  initial(VE_seroneg1n[1:NYO]) <-0
-  initial(VE_seroneg1p[1:NYO]) <-0
+  initial(VE_seroneg[1:NYO]) <-0
+  initial(VE_seropos_mono[1:NYO]) <-0
+  initial(VE_seropos_multi[1:NYO]) <-0
   
-  update(VE_seroneg1n[1:NYO]) <- if(out_update_switch[i]==0||(vca+i-1)>N_age) VE_seroneg1n[i] else RR_dis[1,1,as.integer(vca)+i-1]
-  update(VE_seroneg1p[1:NYO]) <- if(out_update_switch[i]==0||(vca+i-1)>N_age) VE_seroneg1p[i] else RR_dis[1,2,as.integer(vca)+i-1]
+  update(VE_seroneg[1:NYO]) <- if(out_update_switch[i]==0||(vca+i-1)>N_age) VE_seroneg[i] else RR_dis[1,1,as.integer(vca)+i-1]
+  update(VE_seropos_mono[1:NYO]) <- if(out_update_switch[i]==0||(vca+i-1)>N_age) VE_seropos_mono[i] else RR_dis[1,2,as.integer(vca)+i-1]
+  update(VE_seropos_multi[1:NYO]) <- if(out_update_switch[i]==0||(vca+i-1)>N_age) VE_seropos_multi[i] else RR_dis[1,3,as.integer(vca)+i-1]
   
   ## seropositive at 9 and vacc age- outputs cumulative average over first n (1-20) years of vacc period
   
@@ -775,16 +782,16 @@
   
   ## track symptomatic disease incidence and output cumulative totals
   disease_sero[1:N_age,1,1] <- dis_pri[1]*inf_1[i,j]+dis_sec[1]*(inf_21[i,j]+inf_31[i,j]+inf_41[i,j])+dis_tert[1]*(inf_231[i,j]+inf_241[i,j]+inf_341[i,j])+dis_quart[1]*inf_2341[i,j]
-  disease_sero[1:N_age,2:3,1] <- RR_dis[1,1,i]*dis_pri[1]*inf_1[i,j]+RR_dis[1,2,i]*(dis_sec[1]*(inf_21[i,j]+inf_31[i,j]+inf_41[i,j])+dis_tert[1]*(inf_231[i,j]+inf_241[i,j]+inf_341[i,j])+dis_quart[1]*inf_2341[i,j])
+  disease_sero[1:N_age,2:3,1] <- RR_dis[1,1,i]*dis_pri[1]*inf_1[i,j]+RR_dis[1,2,i]*dis_sec[1]*(inf_21[i,j]+inf_31[i,j]+inf_41[i,j])+RR_dis[1,3,i]*(dis_tert[1]*(inf_231[i,j]+inf_241[i,j]+inf_341[i,j])+dis_quart[1]*inf_2341[i,j])
   
   disease_sero[1:N_age,1,2] <- dis_pri[2]*inf_2[i,j]+dis_sec[2]*(inf_12[i,j]+inf_32[i,j]+inf_42[i,j])+dis_tert[2]*(inf_132[i,j]+inf_142[i,j]+inf_342[i,j])+dis_quart[2]*inf_1342[i,j]
-  disease_sero[1:N_age,2:3,2] <- RR_dis[2,1,i]*dis_pri[2]*inf_2[i,j]+RR_dis[2,2,i]*(dis_sec[2]*(inf_12[i,j]+inf_32[i,j]+inf_42[i,j])+dis_tert[2]*(inf_132[i,j]+inf_142[i,j]+inf_342[i,j])+dis_quart[2]*inf_1342[i,j])
+  disease_sero[1:N_age,2:3,2] <- RR_dis[2,1,i]*dis_pri[2]*inf_2[i,j]+RR_dis[2,2,i]*dis_sec[2]*(inf_12[i,j]+inf_32[i,j]+inf_42[i,j])+RR_dis[2,3,i]*(dis_tert[2]*(inf_132[i,j]+inf_142[i,j]+inf_342[i,j])+dis_quart[2]*inf_1342[i,j])
   
   disease_sero[1:N_age,1,3] <- dis_pri[3]*inf_3[i,j]+dis_sec[3]*(inf_13[i,j]+inf_23[i,j]+inf_43[i,j])+dis_tert[3]*(inf_123[i,j]+inf_143[i,j]+inf_243[i,j])+dis_quart[3]*inf_1243[i,j]
-  disease_sero[1:N_age,2:3,3] <- RR_dis[3,1,i]*dis_pri[3]*inf_3[i,j]+RR_dis[3,2,i]*(dis_sec[3]*(inf_13[i,j]+inf_23[i,j]+inf_43[i,j])+dis_tert[3]*(inf_123[i,j]+inf_143[i,j]+inf_243[i,j])+dis_quart[3]*inf_1243[i,j])
+  disease_sero[1:N_age,2:3,3] <- RR_dis[3,1,i]*dis_pri[3]*inf_3[i,j]+RR_dis[3,2,i]*dis_sec[3]*(inf_13[i,j]+inf_23[i,j]+inf_43[i,j])+RR_dis[3,3,i]*(dis_tert[3]*(inf_123[i,j]+inf_143[i,j]+inf_243[i,j])+dis_quart[3]*inf_1243[i,j])
   
   disease_sero[1:N_age,1,4] <- dis_pri[4]*inf_4[i,j]+dis_sec[4]*(inf_14[i,j]+inf_24[i,j]+inf_34[i,j])+dis_tert[4]*(inf_124[i,j]+inf_134[i,j]+inf_234[i,j])+dis_quart[4]*inf_1234[i,j]
-  disease_sero[1:N_age,2:3,4] <- RR_dis[4,1,i]*dis_pri[4]*inf_4[i,j]+RR_dis[4,2,i]*(dis_sec[4]*(inf_14[i,j]+inf_24[i,j]+inf_34[i,j])+dis_tert[4]*(inf_124[i,j]+inf_134[i,j]+inf_234[i,j])+dis_quart[4]*inf_1234[i,j])
+  disease_sero[1:N_age,2:3,4] <- RR_dis[4,1,i]*dis_pri[4]*inf_4[i,j]+RR_dis[4,2,i]*dis_sec[4]*(inf_14[i,j]+inf_24[i,j]+inf_34[i,j])+RR_dis[4,3,i]*(dis_tert[4]*(inf_124[i,j]+inf_134[i,j]+inf_234[i,j])+dis_quart[4]*inf_1234[i,j])
   
   disease_sero_vacc_pri[1:N_age,1] <- dis_pri[1]*RR_dis[1,1,i]*(inf_1[i,2]+inf_1[i,3])
   disease_sero_vacc_pri[1:N_age,2] <- dis_pri[2]*RR_dis[2,1,i]*(inf_2[i,2]+inf_2[i,3])
@@ -836,16 +843,16 @@
 
   ## severe disease
   sdisease_sero[1:N_age,1,1] <- sdis_pri[1]*inf_1[i,j]+sdis_sec[1]*(inf_21[i,j]+inf_31[i,j]+inf_41[i,j])+sdis_tert[1]*(inf_231[i,j]+inf_241[i,j]+inf_341[i,j])+sdis_quart[1]*inf_2341[i,j]
-  sdisease_sero[1:N_age,2:3,1] <- RR_sdis[1,1,i]*sdis_pri[1]*inf_1[i,j]+RR_sdis[1,2,i]*(sdis_sec[1]*(inf_21[i,j]+inf_31[i,j]+inf_41[i,j])+sdis_tert[1]*(inf_231[i,j]+inf_241[i,j]+inf_341[i,j])+sdis_quart[1]*inf_2341[i,j])
+  sdisease_sero[1:N_age,2:3,1] <- RR_sdis[1,1,i]*sdis_pri[1]*inf_1[i,j]+RR_sdis[1,2,i]*sdis_sec[1]*(inf_21[i,j]+inf_31[i,j]+inf_41[i,j])+RR_sdis[1,3,i]*(sdis_tert[1]*(inf_231[i,j]+inf_241[i,j]+inf_341[i,j])+sdis_quart[1]*inf_2341[i,j])
   
   sdisease_sero[1:N_age,1,2] <- sdis_pri[2]*inf_2[i,j]+sdis_sec[2]*(inf_12[i,j]+inf_32[i,j]+inf_42[i,j])+sdis_tert[2]*(inf_132[i,j]+inf_142[i,j]+inf_342[i,j])+sdis_quart[2]*inf_1342[i,j]
-  sdisease_sero[1:N_age,2:3,2] <- RR_sdis[2,1,i]*sdis_pri[2]*inf_2[i,j]+RR_sdis[2,2,i]*(sdis_sec[2]*(inf_12[i,j]+inf_32[i,j]+inf_42[i,j])+sdis_tert[2]*(inf_132[i,j]+inf_142[i,j]+inf_342[i,j])+sdis_quart[2]*inf_1342[i,j])
+  sdisease_sero[1:N_age,2:3,2] <- RR_sdis[2,1,i]*sdis_pri[2]*inf_2[i,j]+RR_sdis[2,2,i]*sdis_sec[2]*(inf_12[i,j]+inf_32[i,j]+inf_42[i,j])+RR_sdis[2,3,i]*(sdis_tert[2]*(inf_132[i,j]+inf_142[i,j]+inf_342[i,j])+sdis_quart[2]*inf_1342[i,j])
   
   sdisease_sero[1:N_age,1,3] <- sdis_pri[3]*inf_3[i,j]+sdis_sec[3]*(inf_13[i,j]+inf_23[i,j]+inf_43[i,j])+sdis_tert[3]*(inf_123[i,j]+inf_143[i,j]+inf_243[i,j])+sdis_quart[3]*inf_1243[i,j]
-  sdisease_sero[1:N_age,2:3,3] <- RR_sdis[3,1,i]*sdis_pri[3]*inf_3[i,j]+RR_sdis[3,2,i]*(sdis_sec[3]*(inf_13[i,j]+inf_23[i,j]+inf_43[i,j])+sdis_tert[3]*(inf_123[i,j]+inf_143[i,j]+inf_243[i,j])+sdis_quart[3]*inf_1243[i,j])
+  sdisease_sero[1:N_age,2:3,3] <- RR_sdis[3,1,i]*sdis_pri[3]*inf_3[i,j]+RR_sdis[3,2,i]*sdis_sec[3]*(inf_13[i,j]+inf_23[i,j]+inf_43[i,j])+RR_sdis[3,3,i]*(sdis_tert[3]*(inf_123[i,j]+inf_143[i,j]+inf_243[i,j])+sdis_quart[3]*inf_1243[i,j])
   
   sdisease_sero[1:N_age,1,4] <- sdis_pri[4]*inf_4[i,j]+sdis_sec[4]*(inf_14[i,j]+inf_24[i,j]+inf_34[i,j])+sdis_tert[4]*(inf_124[i,j]+inf_134[i,j]+inf_234[i,j])+sdis_quart[4]*inf_1234[i,j]
-  sdisease_sero[1:N_age,2:3,4] <- RR_sdis[4,1,i]*sdis_pri[4]*inf_4[i,j]+RR_sdis[4,2,i]*(sdis_sec[4]*(inf_14[i,j]+inf_24[i,j]+inf_34[i,j])+sdis_tert[4]*(inf_124[i,j]+inf_134[i,j]+inf_234[i,j])+sdis_quart[4]*inf_1234[i,j])
+  sdisease_sero[1:N_age,2:3,4] <- RR_sdis[4,1,i]*sdis_pri[4]*inf_4[i,j]+RR_sdis[4,2,i]*sdis_sec[4]*(inf_14[i,j]+inf_24[i,j]+inf_34[i,j])+RR_sdis[4,3,i]*(sdis_tert[4]*(inf_124[i,j]+inf_134[i,j]+inf_234[i,j])+sdis_quart[4]*inf_1234[i,j])
   
   sdisease_sero_vacc_pri[1:N_age,1] <- sdis_pri[1]*RR_sdis[1,1,i]*(inf_1[i,2]+inf_1[i,3])
   sdisease_sero_vacc_pri[1:N_age,2] <- sdis_pri[2]*RR_sdis[2,1,i]*(inf_2[i,2]+inf_2[i,3])
@@ -1795,22 +1802,25 @@
   dim(vcu_noncov) <- c(N_age,3)
   dim(vcu_noncov_S) <- c(N_age,3)
   
-  dim(nc) <- c(4,2,N_age)
-  dim(RR_dis_vc) <- c(4,2,N_age)  
-  dim(RR_sdis_vc) <- c(4,2,N_age)  
+  dim(nc) <- c(4,3,N_age)
+  dim(RR_inf_vc) <- c(4,3,N_age) 
+  dim(RR_dis_vc) <- c(4,3,N_age)  
+  dim(RR_sdis_vc) <- c(4,3,N_age)  
   
-  dim(nc_cu) <- c(4,2)
-  dim(RR_dis_cu) <- c(4,2,N_age)  
-  dim(RR_sdis_cu) <- c(4,2,N_age)  
+  dim(nc_cu) <- c(4,3)
+  dim(RR_inf_cu) <- c(4,3,N_age)  
+  dim(RR_dis_cu) <- c(4,3,N_age)  
+  dim(RR_sdis_cu) <- c(4,3,N_age)  
   
-  dim(RR_inf) <- c(4,2,N_age)  
-  dim(RR_dis) <- c(4,2,N_age)  
-  dim(RR_sdis) <- c(4,2,N_age)  
+  dim(RR_inf) <- c(4,3,N_age)  
+  dim(RR_dis) <- c(4,3,N_age)  
+  dim(RR_sdis) <- c(4,3,N_age)  
   
   dim(out_update_switch) <- NYO
   
-  dim(VE_seroneg1n) <- NYO
-  dim(VE_seroneg1p) <- NYO
+  dim(VE_seroneg) <- NYO
+  dim(VE_seropos_mono) <- NYO
+  dim(VE_seropos_multi) <- NYO
   
   dim(out_prop_seroneg_at_9) <- NYO
   dim(out_prop_seroneg_at_vca) <- NYO
