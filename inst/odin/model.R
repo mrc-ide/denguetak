@@ -311,15 +311,17 @@
   dim(out_nc) <- c(4,3,N_age)
   
   ## relative risks of infection, disease and severe disease in vaccinated people
-  ## note that RR_dis = RR(dis|inf), implicitly
+  ## note that RR_dis = RR(dis|inf)
+  ## If DoVEInf=1, assume that VE(inf) = sqrt of total protection, with all enhancement in VE(dis|inf)
+  ## This is approximately consistent with findings of https://pubmed.ncbi.nlm.nih.gov/27418050/
   
-  RR_inf_vc[1:4,1:3,1:N_age] <- if((ZeroVE==0) && (DoVEInf)) 1/(1+(nc[i,j,k]/(nc50_dis[i,j]*nc50_age[k]))^ws[i]) else 1
-  RR_inf_cu[1:4,1:3,1:N_age] <- if((ZeroVE==0) && (DoVEInf) && (ageb[k]>=youngest_cu_age) && (ageb[k]<=oldest_cu_age)) 1/(1+(nc_cu[i,j]/nc50_dis[i,j]*nc50_age[k])^ws[i]) else 1
+  RR_inf_vc[1:4,1:3,1:N_age] <- if((ZeroVE==0) && (DoVEInf)) 1/sqrt(1+(nc[i,j,k]/(nc50_dis[i,j]*nc50_age[k]))^ws[i]) else 1
+  RR_inf_cu[1:4,1:3,1:N_age] <- if((ZeroVE==0) && (DoVEInf) && (ageb[k]>=youngest_cu_age) && (ageb[k]<=oldest_cu_age)) 1/sqrt(1+(nc_cu[i,j]/nc50_dis[i,j]*nc50_age[k])^ws[i]) else 1
   
-  RR_dis_vc[1:4,1:3,1:N_age] <- if(ZeroVE==1) 1 else if(DoVEInf) L_dis[i,j] else L_dis[i,j]/(1+(nc[i,j,k]/(nc50_dis[i,j]*nc50_age[k]))^ws[i])
+  RR_dis_vc[1:4,1:3,1:N_age] <- if(ZeroVE==1) 1 else if(DoVEInf) L_dis[i,j]*RR_inf_vc[i,j,k] else L_dis[i,j]/(1+(nc[i,j,k]/(nc50_dis[i,j]*nc50_age[k]))^ws[i])
   RR_sdis_vc[1:4,1:3,1:N_age] <- if(ZeroVE==1) 1 else L_sdis[i,j]/(1+(nc[i,j,k]/(nc50_sdis[i,j]*nc50_age[k]))^ws[i])
   
-  RR_dis_cu[1:4,1:3,1:N_age] <- if((ZeroVE==1) || (ageb[k]<youngest_cu_age) || (ageb[k]>oldest_cu_age)) 1 else if(DoVEInf) L_dis[i,j] else L_dis[i,j]/(1+(nc_cu[i,j]/nc50_dis[i,j]*nc50_age[k])^ws[i])
+  RR_dis_cu[1:4,1:3,1:N_age] <- if((ZeroVE==1) || (ageb[k]<youngest_cu_age) || (ageb[k]>oldest_cu_age)) 1 else if(DoVEInf) L_dis[i,j]*RR_inf_cu[i,j,k] else L_dis[i,j]/(1+(nc_cu[i,j]/nc50_dis[i,j]*nc50_age[k])^ws[i])
   RR_sdis_cu[1:4,1:3,1:N_age] <- if((ZeroVE==0) && (ageb[k]>=youngest_cu_age) && (ageb[k]<=oldest_cu_age)) L_sdis[i,j]/(1+(nc_cu[i,j]/nc50_sdis[i,j]*nc50_age[k])^ws[i]) else 1
   
 

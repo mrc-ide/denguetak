@@ -3002,14 +3002,7 @@ public:
     for (int i = 1; i <= 4; ++i) {
       for (int j = 1; j <= 3; ++j) {
         for (int k = 1; k <= shared->N_age; ++k) {
-          internal.RR_dis_cu[i - 1 + shared->dim_RR_dis_cu_1 * (j - 1) + shared->dim_RR_dis_cu_12 * (k - 1)] = ((shared->ZeroVE == 1) || (shared->ageb[k - 1] < youngest_cu_age) || (shared->ageb[k - 1] > oldest_cu_age) ? 1 : (shared->DoVEInf ? shared->L_dis[shared->dim_L_dis_1 * (j - 1) + i - 1] : shared->L_dis[shared->dim_L_dis_1 * (j - 1) + i - 1] / (real_type) (1 + dust::math::pow((internal.nc_cu[shared->dim_nc_cu_1 * (j - 1) + i - 1] / (real_type) shared->nc50_dis[shared->dim_nc50_dis_1 * (j - 1) + i - 1] * shared->nc50_age[k - 1]), shared->ws[i - 1]))));
-        }
-      }
-    }
-    for (int i = 1; i <= 4; ++i) {
-      for (int j = 1; j <= 3; ++j) {
-        for (int k = 1; k <= shared->N_age; ++k) {
-          internal.RR_inf_cu[i - 1 + shared->dim_RR_inf_cu_1 * (j - 1) + shared->dim_RR_inf_cu_12 * (k - 1)] = ((shared->ZeroVE == 0) && (shared->DoVEInf) && (shared->ageb[k - 1] >= youngest_cu_age) && (shared->ageb[k - 1] <= oldest_cu_age) ? 1 / (real_type) (1 + dust::math::pow((internal.nc_cu[shared->dim_nc_cu_1 * (j - 1) + i - 1] / (real_type) shared->nc50_dis[shared->dim_nc50_dis_1 * (j - 1) + i - 1] * shared->nc50_age[k - 1]), shared->ws[i - 1])) : 1);
+          internal.RR_inf_cu[i - 1 + shared->dim_RR_inf_cu_1 * (j - 1) + shared->dim_RR_inf_cu_12 * (k - 1)] = ((shared->ZeroVE == 0) && (shared->DoVEInf) && (shared->ageb[k - 1] >= youngest_cu_age) && (shared->ageb[k - 1] <= oldest_cu_age) ? 1 / (real_type) dust::math::sqrt(1 + dust::math::pow((internal.nc_cu[shared->dim_nc_cu_1 * (j - 1) + i - 1] / (real_type) shared->nc50_dis[shared->dim_nc50_dis_1 * (j - 1) + i - 1] * shared->nc50_age[k - 1]), shared->ws[i - 1])) : 1);
         }
       }
     }
@@ -3224,6 +3217,13 @@ public:
         internal.recov_43[i - 1 + shared->dim_recov_43_1 * (j - 1)] = dust::random::binomial<real_type>(rng_state, (internal.O_I43[shared->dim_O_I43_1 * (j - 1) + i - 1]), (shared->nu / (real_type) (shared->nu + internal.deathrt[i - 1])));
       }
     }
+    for (int i = 1; i <= 4; ++i) {
+      for (int j = 1; j <= 3; ++j) {
+        for (int k = 1; k <= shared->N_age; ++k) {
+          internal.RR_dis_cu[i - 1 + shared->dim_RR_dis_cu_1 * (j - 1) + shared->dim_RR_dis_cu_12 * (k - 1)] = ((shared->ZeroVE == 1) || (shared->ageb[k - 1] < youngest_cu_age) || (shared->ageb[k - 1] > oldest_cu_age) ? 1 : (shared->DoVEInf ? shared->L_dis[shared->dim_L_dis_1 * (j - 1) + i - 1] * internal.RR_inf_cu[shared->dim_RR_inf_cu_12 * (k - 1) + shared->dim_RR_inf_cu_1 * (j - 1) + i - 1] : shared->L_dis[shared->dim_L_dis_1 * (j - 1) + i - 1] / (real_type) (1 + dust::math::pow((internal.nc_cu[shared->dim_nc_cu_1 * (j - 1) + i - 1] / (real_type) shared->nc50_dis[shared->dim_nc50_dis_1 * (j - 1) + i - 1] * shared->nc50_age[k - 1]), shared->ws[i - 1]))));
+        }
+      }
+    }
     state_next[10] = Lwb_birth + Lwb - O_Lwb;
     state_next[0] = Lwt_birth + Lwt - O_Lwt;
     state_next[24] = NTvE;
@@ -3251,14 +3251,7 @@ public:
     for (int i = 1; i <= 4; ++i) {
       for (int j = 1; j <= 3; ++j) {
         for (int k = 1; k <= shared->N_age; ++k) {
-          internal.RR_dis_vc[i - 1 + shared->dim_RR_dis_vc_1 * (j - 1) + shared->dim_RR_dis_vc_12 * (k - 1)] = (shared->ZeroVE == 1 ? 1 : (shared->DoVEInf ? shared->L_dis[shared->dim_L_dis_1 * (j - 1) + i - 1] : shared->L_dis[shared->dim_L_dis_1 * (j - 1) + i - 1] / (real_type) (1 + dust::math::pow((internal.nc[shared->dim_nc_12 * (k - 1) + shared->dim_nc_1 * (j - 1) + i - 1] / (real_type) (shared->nc50_dis[shared->dim_nc50_dis_1 * (j - 1) + i - 1] * shared->nc50_age[k - 1])), shared->ws[i - 1]))));
-        }
-      }
-    }
-    for (int i = 1; i <= 4; ++i) {
-      for (int j = 1; j <= 3; ++j) {
-        for (int k = 1; k <= shared->N_age; ++k) {
-          internal.RR_inf_vc[i - 1 + shared->dim_RR_inf_vc_1 * (j - 1) + shared->dim_RR_inf_vc_12 * (k - 1)] = ((shared->ZeroVE == 0) && (shared->DoVEInf) ? 1 / (real_type) (1 + dust::math::pow((internal.nc[shared->dim_nc_12 * (k - 1) + shared->dim_nc_1 * (j - 1) + i - 1] / (real_type) (shared->nc50_dis[shared->dim_nc50_dis_1 * (j - 1) + i - 1] * shared->nc50_age[k - 1])), shared->ws[i - 1])) : 1);
+          internal.RR_inf_vc[i - 1 + shared->dim_RR_inf_vc_1 * (j - 1) + shared->dim_RR_inf_vc_12 * (k - 1)] = ((shared->ZeroVE == 0) && (shared->DoVEInf) ? 1 / (real_type) dust::math::sqrt(1 + dust::math::pow((internal.nc[shared->dim_nc_12 * (k - 1) + shared->dim_nc_1 * (j - 1) + i - 1] / (real_type) (shared->nc50_dis[shared->dim_nc50_dis_1 * (j - 1) + i - 1] * shared->nc50_age[k - 1])), shared->ws[i - 1])) : 1);
         }
       }
     }
@@ -3307,7 +3300,7 @@ public:
     for (int i = 1; i <= 4; ++i) {
       for (int j = 1; j <= 3; ++j) {
         for (int k = 1; k <= shared->N_age; ++k) {
-          internal.RR_dis[i - 1 + shared->dim_RR_dis_1 * (j - 1) + shared->dim_RR_dis_12 * (k - 1)] = internal.RR_dis_vc[shared->dim_RR_dis_vc_12 * (k - 1) + shared->dim_RR_dis_vc_1 * (j - 1) + i - 1] * internal.RR_dis_cu[shared->dim_RR_dis_cu_12 * (k - 1) + shared->dim_RR_dis_cu_1 * (j - 1) + i - 1];
+          internal.RR_dis_vc[i - 1 + shared->dim_RR_dis_vc_1 * (j - 1) + shared->dim_RR_dis_vc_12 * (k - 1)] = (shared->ZeroVE == 1 ? 1 : (shared->DoVEInf ? shared->L_dis[shared->dim_L_dis_1 * (j - 1) + i - 1] * internal.RR_inf_vc[shared->dim_RR_inf_vc_12 * (k - 1) + shared->dim_RR_inf_vc_1 * (j - 1) + i - 1] : shared->L_dis[shared->dim_L_dis_1 * (j - 1) + i - 1] / (real_type) (1 + dust::math::pow((internal.nc[shared->dim_nc_12 * (k - 1) + shared->dim_nc_1 * (j - 1) + i - 1] / (real_type) (shared->nc50_dis[shared->dim_nc50_dis_1 * (j - 1) + i - 1] * shared->nc50_age[k - 1])), shared->ws[i - 1]))));
         }
       }
     }
@@ -3620,28 +3613,19 @@ public:
     for (int i = 1; i <= 4; ++i) {
       for (int j = 1; j <= 3; ++j) {
         for (int k = 1; k <= shared->N_age; ++k) {
+          internal.RR_dis[i - 1 + shared->dim_RR_dis_1 * (j - 1) + shared->dim_RR_dis_12 * (k - 1)] = internal.RR_dis_vc[shared->dim_RR_dis_vc_12 * (k - 1) + shared->dim_RR_dis_vc_1 * (j - 1) + i - 1] * internal.RR_dis_cu[shared->dim_RR_dis_cu_12 * (k - 1) + shared->dim_RR_dis_cu_1 * (j - 1) + i - 1];
+        }
+      }
+    }
+    for (int i = 1; i <= 4; ++i) {
+      for (int j = 1; j <= 3; ++j) {
+        for (int k = 1; k <= shared->N_age; ++k) {
           internal.RR_sdis[i - 1 + shared->dim_RR_sdis_1 * (j - 1) + shared->dim_RR_sdis_12 * (k - 1)] = (shared->DoVEInf ? internal.RR_sdis_vc[shared->dim_RR_sdis_vc_12 * (k - 1) + shared->dim_RR_sdis_vc_1 * (j - 1) + i - 1] * internal.RR_sdis_cu[shared->dim_RR_sdis_cu_12 * (k - 1) + shared->dim_RR_sdis_cu_1 * (j - 1) + i - 1] / (real_type) internal.RR_inf[shared->dim_RR_inf_12 * (k - 1) + shared->dim_RR_inf_1 * (j - 1) + i - 1] : internal.RR_sdis_vc[shared->dim_RR_sdis_vc_12 * (k - 1) + shared->dim_RR_sdis_vc_1 * (j - 1) + i - 1] * internal.RR_sdis_cu[shared->dim_RR_sdis_cu_12 * (k - 1) + shared->dim_RR_sdis_cu_1 * (j - 1) + i - 1]);
         }
       }
     }
     state_next[11] = Lwb_mature + Mwb_intro + Mwb_S - O_Mwb_S;
     state_next[2] = Mwt_inf1 + Mwt_E1 - O_Mwt_E1;
-    for (int i = 1; i <= 4; ++i) {
-      for (int j = 1; j <= 3; ++j) {
-        for (int k = 1; k <= shared->N_age; ++k) {
-          state_next[shared->offset_variable_out_RR + i - 1 + shared->dim_out_RR_1 * (j - 1) + shared->dim_out_RR_12 * (k - 1)] = internal.RR_dis[shared->dim_RR_dis_12 * (k - 1) + shared->dim_RR_dis_1 * (j - 1) + i - 1];
-        }
-      }
-    }
-    for (int i = 1; i <= shared->NYO; ++i) {
-      state_next[shared->offset_variable_VE_seroneg + i - 1] = (internal.out_update_switch[i - 1] == 0 || (shared->vca + i - 1) > shared->N_age ? VE_seroneg[i - 1] : internal.RR_dis[shared->dim_RR_dis_12 * (static_cast<int>(shared->vca) + i - 1 - 1) + shared->dim_RR_dis_1 * 0 + 0]);
-    }
-    for (int i = 1; i <= shared->NYO; ++i) {
-      state_next[shared->offset_variable_VE_seropos_mono + i - 1] = (internal.out_update_switch[i - 1] == 0 || (shared->vca + i - 1) > shared->N_age ? VE_seropos_mono[i - 1] : internal.RR_dis[shared->dim_RR_dis_12 * (static_cast<int>(shared->vca) + i - 1 - 1) + shared->dim_RR_dis_1 * 1 + 0]);
-    }
-    for (int i = 1; i <= shared->NYO; ++i) {
-      state_next[shared->offset_variable_VE_seropos_multi + i - 1] = (internal.out_update_switch[i - 1] == 0 || (shared->vca + i - 1) > shared->N_age ? VE_seropos_multi[i - 1] : internal.RR_dis[shared->dim_RR_dis_12 * (static_cast<int>(shared->vca) + i - 1 - 1) + shared->dim_RR_dis_1 * 2 + 0]);
-    }
     real_type Mwb_inf2 = (Mwb_FOI2 / (real_type) (shared->DT * shared->delta_wb + Mwb_FOI2 + Mwb_FOI3 + Mwb_FOI4)) * (O_Mwb_S - Mwb_inf1);
     real_type Mwt_inf3 = (Mwt_FOI3 / (real_type) (shared->DT * shared->delta + Mwt_FOI3 + Mwt_FOI4)) * (O_Mwt_S - Mwt_inf1 - Mwt_inf2);
     for (int i = 1; i <= shared->N_age; ++i) {
@@ -3724,6 +3708,22 @@ public:
     }
     state_next[12] = Mwb_inf1 + Mwb_E1 - O_Mwb_E1;
     state_next[3] = Mwt_inf2 + Mwt_E2 - O_Mwt_E2;
+    for (int i = 1; i <= 4; ++i) {
+      for (int j = 1; j <= 3; ++j) {
+        for (int k = 1; k <= shared->N_age; ++k) {
+          state_next[shared->offset_variable_out_RR + i - 1 + shared->dim_out_RR_1 * (j - 1) + shared->dim_out_RR_12 * (k - 1)] = internal.RR_dis[shared->dim_RR_dis_12 * (k - 1) + shared->dim_RR_dis_1 * (j - 1) + i - 1];
+        }
+      }
+    }
+    for (int i = 1; i <= shared->NYO; ++i) {
+      state_next[shared->offset_variable_VE_seroneg + i - 1] = (internal.out_update_switch[i - 1] == 0 || (shared->vca + i - 1) > shared->N_age ? VE_seroneg[i - 1] : internal.RR_dis[shared->dim_RR_dis_12 * (static_cast<int>(shared->vca) + i - 1 - 1) + shared->dim_RR_dis_1 * 0 + 0]);
+    }
+    for (int i = 1; i <= shared->NYO; ++i) {
+      state_next[shared->offset_variable_VE_seropos_mono + i - 1] = (internal.out_update_switch[i - 1] == 0 || (shared->vca + i - 1) > shared->N_age ? VE_seropos_mono[i - 1] : internal.RR_dis[shared->dim_RR_dis_12 * (static_cast<int>(shared->vca) + i - 1 - 1) + shared->dim_RR_dis_1 * 1 + 0]);
+    }
+    for (int i = 1; i <= shared->NYO; ++i) {
+      state_next[shared->offset_variable_VE_seropos_multi + i - 1] = (internal.out_update_switch[i - 1] == 0 || (shared->vca + i - 1) > shared->N_age ? VE_seropos_multi[i - 1] : internal.RR_dis[shared->dim_RR_dis_12 * (static_cast<int>(shared->vca) + i - 1 - 1) + shared->dim_RR_dis_1 * 2 + 0]);
+    }
     for (int i = 1; i <= shared->N_age; ++i) {
       internal.vw_R1234[i - 1] = dust::random::binomial<real_type>(rng_state, internal.n_R1234[shared->dim_n_R1234_1 * 1 + i - 1], shared->vacc_decay);
     }
