@@ -804,13 +804,17 @@
   dis_sero_unvacc[1:4] <- sum(disease_sero[,1,i])
   dis_sero_vacc[1:4] <- sum(disease_sero[,2,i])+sum(disease_sero[,3,i])
   dis_sero_pop[1:4] <- dis_sero_unvacc[i]+dis_sero_vacc[i]
-  dis_sero_vacc_neg[1:4] <- sum(disease_sero_vacc_pri[,i])
-  dis_sero_vacc_pos[1:4] <- dis_sero_vacc[i]-dis_sero_vacc_neg[i]
+  dis_sero_vacc_pri[1:4] <- sum(disease_sero_vacc_pri[,i])
+  dis_sero_vacc_secp[1:4] <- dis_sero_vacc[i]-dis_sero_vacc_neg[i]
+  dis_sero_vacc_neg[1:4] <- sum(disease_sero[,3,i])
+  dis_sero_vacc_pos[1:4] <- sum(disease_sero[,2,i])
   dis_all_pop <- sum(dis_sero_pop)
   dis_all_vacc <- sum(dis_sero_vacc)
   dis_all_unvacc <- sum(dis_sero_unvacc)
   dis_all_vacc_neg <- sum(dis_sero_vacc_neg)  
   dis_all_vacc_pos <- sum(dis_sero_vacc_pos)
+  dis_all_vacc_pri <- sum(dis_sero_vacc_pri)  
+  dis_all_vacc_secp <- sum(dis_sero_vacc_secp)
   disc_dis_all_pop <- dis_all_pop*cum_disc
   disc_dis_all_vacc <- dis_all_vacc*cum_disc
   
@@ -821,9 +825,13 @@
   initial(out_dis_all_vacc[1:NYO]) <-0
   initial(out_dis_all_vacc_neg[1:NYO]) <-0
   initial(out_dis_all_vacc_pos[1:NYO]) <-0
+  initial(out_dis_all_vacc_pri[1:NYO]) <-0
+  initial(out_dis_all_vacc_secp[1:NYO]) <-0
   initial(out_dis_sero_vacc[1:NYO,1:4]) <-0
   initial(out_dis_sero_vacc_neg[1:NYO,1:4]) <-0
   initial(out_dis_sero_vacc_pos[1:NYO,1:4]) <-0
+  initial(out_dis_sero_vacc_pri[1:NYO,1:4]) <-0
+  initial(out_dis_sero_vacc_secp[1:NYO,1:4]) <-0
   initial(out_disc_dis_all_pop[1:NYO]) <-0
   initial(out_disc_dis_all_vacc[1:NYO]) <-0
   
@@ -834,9 +842,13 @@
   update(out_dis_all_vacc[1:NYO]) <- out_dis_all_vacc[i] + (if(out_update_switch[i]==0) 0 else dis_all_vacc)
   update(out_dis_all_vacc_neg[1:NYO]) <- out_dis_all_vacc_neg[i] + (if(out_update_switch[i]==0) 0 else dis_all_vacc_neg)
   update(out_dis_all_vacc_pos[1:NYO]) <- out_dis_all_vacc_pos[i] + (if(out_update_switch[i]==0) 0 else dis_all_vacc_pos)
+  update(out_dis_all_vacc_pri[1:NYO]) <- out_dis_all_vacc_pri[i] + (if(out_update_switch[i]==0) 0 else dis_all_vacc_pri)
+  update(out_dis_all_vacc_secp[1:NYO]) <- out_dis_all_vacc_secp[i] + (if(out_update_switch[i]==0) 0 else dis_all_vacc_secp)
   update(out_dis_sero_vacc[1:NYO,1:4]) <- out_dis_sero_vacc[i,j] + (if(out_update_switch[i]==0) 0 else dis_sero_vacc[j])
   update(out_dis_sero_vacc_neg[1:NYO,1:4]) <- out_dis_sero_vacc_neg[i,j] + (if(out_update_switch[i]==0) 0 else dis_sero_vacc_neg[j])
   update(out_dis_sero_vacc_pos[1:NYO,1:4]) <- out_dis_sero_vacc_pos[i,j] + (if(out_update_switch[i]==0) 0 else dis_sero_vacc_pos[j])
+  update(out_dis_sero_vacc_pri[1:NYO,1:4]) <- out_dis_sero_vacc_pri[i,j] + (if(out_update_switch[i]==0) 0 else dis_sero_vacc_pri[j])
+  update(out_dis_sero_vacc_secp[1:NYO,1:4]) <- out_dis_sero_vacc_secp[i,j] + (if(out_update_switch[i]==0) 0 else dis_sero_vacc_secp[j])
   update(out_disc_dis_all_pop[1:NYO]) <- out_disc_dis_all_pop[i] + (if(out_update_switch[i]==0) 0 else disc_dis_all_pop)
   update(out_disc_dis_all_vacc[1:NYO]) <- out_disc_dis_all_vacc[i] + (if(out_update_switch[i]==0) 0 else disc_dis_all_vacc)
   
@@ -861,17 +873,21 @@
   sdisease_sero_vacc_pri[1:N_age,2] <- sdis_pri[2]*RR_sdis[2,1,i]*(inf_2[i,2]+inf_2[i,3])
   sdisease_sero_vacc_pri[1:N_age,3] <- sdis_pri[3]*RR_sdis[3,1,i]*(inf_3[i,2]+inf_3[i,3])
   sdisease_sero_vacc_pri[1:N_age,4] <- sdis_pri[4]*RR_sdis[4,1,i]*(inf_4[i,2]+inf_4[i,3])
-
+  
   sdis_sero_unvacc[1:4] <- sum(sdisease_sero[,1,i])
   sdis_sero_vacc[1:4] <- sum(sdisease_sero[,2,i])+sum(sdisease_sero[,3,i])
   sdis_sero_pop[1:4] <- sdis_sero_unvacc[i]+sdis_sero_vacc[i]
-  sdis_sero_vacc_neg[1:4] <- sum(sdisease_sero_vacc_pri[,i])
-  sdis_sero_vacc_pos[1:4] <- sdis_sero_vacc[i]-sdis_sero_vacc_neg[i]
+  sdis_sero_vacc_pri[1:4] <- sum(sdisease_sero_vacc_pri[,i])
+  sdis_sero_vacc_secp[1:4] <- sdis_sero_vacc[i]-sdis_sero_vacc_neg[i]
+  sdis_sero_vacc_neg[1:4] <- sum(sdisease_sero[,3,i])
+  sdis_sero_vacc_pos[1:4] <- sum(sdisease_sero[,2,i])
   sdis_all_pop <- sum(sdis_sero_pop)
   sdis_all_vacc <- sum(sdis_sero_vacc)
   sdis_all_unvacc <- sum(sdis_sero_unvacc)
   sdis_all_vacc_neg <- sum(sdis_sero_vacc_neg)  
   sdis_all_vacc_pos <- sum(sdis_sero_vacc_pos)
+  sdis_all_vacc_pri <- sum(sdis_sero_vacc_pri)  
+  sdis_all_vacc_secp <- sum(sdis_sero_vacc_secp)
   disc_sdis_all_pop <- sdis_all_pop*cum_disc
   disc_sdis_all_vacc <- sdis_all_vacc*cum_disc
   
@@ -882,9 +898,13 @@
   initial(out_sdis_all_vacc[1:NYO]) <-0
   initial(out_sdis_all_vacc_neg[1:NYO]) <-0
   initial(out_sdis_all_vacc_pos[1:NYO]) <-0
+  initial(out_sdis_all_vacc_pri[1:NYO]) <-0
+  initial(out_sdis_all_vacc_secp[1:NYO]) <-0
   initial(out_sdis_sero_vacc[1:NYO,1:4]) <-0
   initial(out_sdis_sero_vacc_neg[1:NYO,1:4]) <-0
   initial(out_sdis_sero_vacc_pos[1:NYO,1:4]) <-0
+  initial(out_sdis_sero_vacc_pri[1:NYO,1:4]) <-0
+  initial(out_sdis_sero_vacc_secp[1:NYO,1:4]) <-0
   initial(out_disc_sdis_all_pop[1:NYO]) <-0
   initial(out_disc_sdis_all_vacc[1:NYO]) <-0
   
@@ -895,9 +915,13 @@
   update(out_sdis_all_vacc[1:NYO]) <- out_sdis_all_vacc[i] + (if(out_update_switch[i]==0) 0 else sdis_all_vacc)
   update(out_sdis_all_vacc_neg[1:NYO]) <- out_sdis_all_vacc_neg[i] + (if(out_update_switch[i]==0) 0 else sdis_all_vacc_neg)
   update(out_sdis_all_vacc_pos[1:NYO]) <- out_sdis_all_vacc_pos[i] + (if(out_update_switch[i]==0) 0 else sdis_all_vacc_pos)
+  update(out_sdis_all_vacc_pri[1:NYO]) <- out_sdis_all_vacc_pri[i] + (if(out_update_switch[i]==0) 0 else sdis_all_vacc_pri)
+  update(out_sdis_all_vacc_secp[1:NYO]) <- out_sdis_all_vacc_secp[i] + (if(out_update_switch[i]==0) 0 else sdis_all_vacc_secp)
   update(out_sdis_sero_vacc[1:NYO,1:4]) <- out_sdis_sero_vacc[i,j] + (if(out_update_switch[i]==0) 0 else sdis_sero_vacc[j])
   update(out_sdis_sero_vacc_neg[1:NYO,1:4]) <- out_sdis_sero_vacc_neg[i,j] + (if(out_update_switch[i]==0) 0 else sdis_sero_vacc_neg[j])
   update(out_sdis_sero_vacc_pos[1:NYO,1:4]) <- out_sdis_sero_vacc_pos[i,j] + (if(out_update_switch[i]==0) 0 else sdis_sero_vacc_pos[j])
+  update(out_sdis_sero_vacc_pri[1:NYO,1:4]) <- out_sdis_sero_vacc_pri[i,j] + (if(out_update_switch[i]==0) 0 else sdis_sero_vacc_pri[j])
+  update(out_sdis_sero_vacc_secp[1:NYO,1:4]) <- out_sdis_sero_vacc_secp[i,j] + (if(out_update_switch[i]==0) 0 else sdis_sero_vacc_secp[j])
   update(out_disc_sdis_all_pop[1:NYO]) <- out_disc_sdis_all_pop[i] + (if(out_update_switch[i]==0) 0 else disc_sdis_all_pop)
   update(out_disc_sdis_all_vacc[1:NYO]) <- out_disc_sdis_all_vacc[i] + (if(out_update_switch[i]==0) 0 else disc_sdis_all_vacc)
   
@@ -905,23 +929,25 @@
   ## years of life lost
   
   yll_sero[1:N_age,1:3,1:4] <- sdisease_sero[i,j,k]*cfr*life_expec[i]
-  yll_sero_vacc_pri[1:N_age,1:4] <- sdisease_sero_vacc_pri[i,j]*cfr*life_expec[i]
+  yll_sero_vacc_pri_age[1:N_age,1:4] <- sdisease_sero_vacc_pri[i,j]*cfr*life_expec[i]
   disc_yll_all[1:N_age,1:3] <- sum(sdisease_sero[i,j,])*cfr*(1.0-1.0/(disc_fact^life_expec[i]))/log(disc_fact)
   
   yll_sero_unvacc[1:4] <- sum(yll_sero[,1,i])
   yll_sero_vacc[1:4] <- sum(yll_sero[,2,i])+sum(yll_sero[,3,i])
   yll_sero_pop[1:4] <- yll_sero_unvacc[i]+yll_sero_vacc[i]
-  yll_sero_vacc_neg[1:4] <- sum(yll_sero_vacc_pri[,i])
-  yll_sero_vacc_pos[1:4] <- yll_sero_vacc[i]-yll_sero_vacc_neg[i]
+  yll_sero_vacc_pri[1:4] <- sum(yll_sero_vacc_pri_age[,i])
+  yll_sero_vacc_secp[1:4] <- yll_sero_vacc[i]-yll_sero_vacc_neg[i]
+  yll_sero_vacc_neg[1:4] <- sum(yll_sero[,3,i])
+  yll_sero_vacc_pos[1:4] <- sum(yll_sero[,2,i])
   yll_all_pop <- sum(yll_sero_pop)
   yll_all_vacc <- sum(yll_sero_vacc)
   yll_all_unvacc <- sum(yll_sero_unvacc)
   yll_all_vacc_neg <- sum(yll_sero_vacc_neg)  
   yll_all_vacc_pos <- sum(yll_sero_vacc_pos)
-  disc_yll_all_unvacc <- sum(disc_yll_all[,1])*cum_disc
-  disc_yll_all_vacc <- (sum(disc_yll_all[,2])+sum(disc_yll_all[,3]))*cum_disc
-  disc_yll_all_pop <- disc_yll_all_vacc+disc_yll_all_unvacc
-
+  yll_all_vacc_pri <- sum(yll_sero_vacc_pri)  
+  yll_all_vacc_secp <- sum(yll_sero_vacc_secp)
+  disc_yll_all_pop <- yll_all_pop*cum_disc
+  disc_yll_all_vacc <- yll_all_vacc*cum_disc
   
   initial(out_yll_all_pop[1:NYO]) <-0
   initial(out_yll_sero_pop[1:NYO,1:4]) <-0
@@ -930,9 +956,13 @@
   initial(out_yll_all_vacc[1:NYO]) <-0
   initial(out_yll_all_vacc_neg[1:NYO]) <-0
   initial(out_yll_all_vacc_pos[1:NYO]) <-0
+  initial(out_yll_all_vacc_pri[1:NYO]) <-0
+  initial(out_yll_all_vacc_secp[1:NYO]) <-0
   initial(out_yll_sero_vacc[1:NYO,1:4]) <-0
   initial(out_yll_sero_vacc_neg[1:NYO,1:4]) <-0
   initial(out_yll_sero_vacc_pos[1:NYO,1:4]) <-0
+  initial(out_yll_sero_vacc_pri[1:NYO,1:4]) <-0
+  initial(out_yll_sero_vacc_secp[1:NYO,1:4]) <-0
   initial(out_disc_yll_all_pop[1:NYO]) <-0
   initial(out_disc_yll_all_vacc[1:NYO]) <-0
   
@@ -943,9 +973,13 @@
   update(out_yll_all_vacc[1:NYO]) <- out_yll_all_vacc[i] + (if(out_update_switch[i]==0) 0 else yll_all_vacc)
   update(out_yll_all_vacc_neg[1:NYO]) <- out_yll_all_vacc_neg[i] + (if(out_update_switch[i]==0) 0 else yll_all_vacc_neg)
   update(out_yll_all_vacc_pos[1:NYO]) <- out_yll_all_vacc_pos[i] + (if(out_update_switch[i]==0) 0 else yll_all_vacc_pos)
+  update(out_yll_all_vacc_pri[1:NYO]) <- out_yll_all_vacc_pri[i] + (if(out_update_switch[i]==0) 0 else yll_all_vacc_pri)
+  update(out_yll_all_vacc_secp[1:NYO]) <- out_yll_all_vacc_secp[i] + (if(out_update_switch[i]==0) 0 else yll_all_vacc_secp)
   update(out_yll_sero_vacc[1:NYO,1:4]) <- out_yll_sero_vacc[i,j] + (if(out_update_switch[i]==0) 0 else yll_sero_vacc[j])
   update(out_yll_sero_vacc_neg[1:NYO,1:4]) <- out_yll_sero_vacc_neg[i,j] + (if(out_update_switch[i]==0) 0 else yll_sero_vacc_neg[j])
   update(out_yll_sero_vacc_pos[1:NYO,1:4]) <- out_yll_sero_vacc_pos[i,j] + (if(out_update_switch[i]==0) 0 else yll_sero_vacc_pos[j])
+  update(out_yll_sero_vacc_pri[1:NYO,1:4]) <- out_yll_sero_vacc_pri[i,j] + (if(out_update_switch[i]==0) 0 else yll_sero_vacc_pri[j])
+  update(out_yll_sero_vacc_secp[1:NYO,1:4]) <- out_yll_sero_vacc_secp[i,j] + (if(out_update_switch[i]==0) 0 else yll_sero_vacc_secp[j])
   update(out_disc_yll_all_pop[1:NYO]) <- out_disc_yll_all_pop[i] + (if(out_update_switch[i]==0) 0 else disc_yll_all_pop)
   update(out_disc_yll_all_vacc[1:NYO]) <- out_disc_yll_all_vacc[i] + (if(out_update_switch[i]==0) 0 else disc_yll_all_vacc)
   
@@ -1835,6 +1869,8 @@
   dim(dis_sero_pop) <- 4
   dim(dis_sero_vacc_neg) <- 4
   dim(dis_sero_vacc_pos) <- 4
+  dim(dis_sero_vacc_pri) <- 4
+  dim(dis_sero_vacc_secp) <- 4
   
   dim(out_dis_all_pop) <- NYO
   dim(out_dis_sero_pop) <- c(NYO,4)
@@ -1843,9 +1879,13 @@
   dim(out_dis_all_vacc) <- NYO
   dim(out_dis_all_vacc_neg) <- NYO
   dim(out_dis_all_vacc_pos) <- NYO
+  dim(out_dis_all_vacc_pri) <- NYO
+  dim(out_dis_all_vacc_secp) <- NYO
   dim(out_dis_sero_vacc) <- c(NYO,4)
   dim(out_dis_sero_vacc_neg) <- c(NYO,4)
   dim(out_dis_sero_vacc_pos) <- c(NYO,4)
+  dim(out_dis_sero_vacc_pri) <- c(NYO,4)
+  dim(out_dis_sero_vacc_secp) <- c(NYO,4)
   dim(out_disc_dis_all_pop) <- NYO
   dim(out_disc_dis_all_vacc) <- NYO
   
@@ -1856,6 +1896,8 @@
   dim(sdis_sero_pop) <- 4
   dim(sdis_sero_vacc_neg) <- 4
   dim(sdis_sero_vacc_pos) <- 4
+  dim(sdis_sero_vacc_pri) <- 4
+  dim(sdis_sero_vacc_secp) <- 4
   
   dim(out_sdis_all_pop) <- NYO
   dim(out_sdis_sero_pop) <- c(NYO,4)
@@ -1864,20 +1906,26 @@
   dim(out_sdis_all_vacc) <- NYO
   dim(out_sdis_all_vacc_neg) <- NYO
   dim(out_sdis_all_vacc_pos) <- NYO
+  dim(out_sdis_all_vacc_pri) <- NYO
+  dim(out_sdis_all_vacc_secp) <- NYO
   dim(out_sdis_sero_vacc) <- c(NYO,4)
   dim(out_sdis_sero_vacc_neg) <- c(NYO,4)
   dim(out_sdis_sero_vacc_pos) <- c(NYO,4)
+  dim(out_sdis_sero_vacc_pri) <- c(NYO,4)
+  dim(out_sdis_sero_vacc_secp) <- c(NYO,4)
   dim(out_disc_sdis_all_pop) <- NYO
   dim(out_disc_sdis_all_vacc) <- NYO
   
   dim(yll_sero) <- c(N_age, 3, 4)
-  dim(yll_sero_vacc_pri) <- c(N_age, 4)
+  dim(yll_sero_vacc_pri_age) <- c(N_age, 4)
   dim(disc_yll_all) <- c(N_age, 3)
   dim(yll_sero_unvacc) <- 4
   dim(yll_sero_vacc) <- 4
   dim(yll_sero_pop) <- 4
   dim(yll_sero_vacc_neg) <- 4
   dim(yll_sero_vacc_pos) <- 4
+  dim(yll_sero_vacc_pri) <- 4
+  dim(yll_sero_vacc_secp) <- 4
   
   dim(out_yll_all_pop) <- NYO
   dim(out_yll_sero_pop) <- c(NYO,4)
@@ -1886,9 +1934,13 @@
   dim(out_yll_all_vacc) <- NYO
   dim(out_yll_all_vacc_neg) <- NYO
   dim(out_yll_all_vacc_pos) <- NYO
+  dim(out_yll_all_vacc_pri) <- NYO
+  dim(out_yll_all_vacc_secp) <- NYO
   dim(out_yll_sero_vacc) <- c(NYO,4)
   dim(out_yll_sero_vacc_neg) <- c(NYO,4)
   dim(out_yll_sero_vacc_pos) <- c(NYO,4)
+  dim(out_yll_sero_vacc_pri) <- c(NYO,4)
+  dim(out_yll_sero_vacc_secp) <- c(NYO,4)
   dim(out_disc_yll_all_pop) <- NYO
   dim(out_disc_yll_all_vacc) <- NYO
   
