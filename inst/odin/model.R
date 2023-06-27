@@ -817,7 +817,7 @@
   dis_all_vacc_secp <- sum(dis_sero_vacc_secp)
   disc_dis_all_pop <- dis_all_pop*cum_disc
   disc_dis_all_vacc <- dis_all_vacc*cum_disc
-  
+
   initial(out_dis_all_pop[1:NYO]) <-0
   initial(out_dis_sero_pop[1:NYO,1:4]) <-0
   initial(out_dis_all_unvacc[1:NYO]) <-0
@@ -855,6 +855,52 @@
   initial(tot_inc_dis) <- 0
   update(tot_inc_dis) <- (if(NUM_YEAR_ACCUM*floor(YEAR/NUM_YEAR_ACCUM)==YEAR) 0 else tot_inc_dis)+1e5*dis_all_pop/NT
   
+  intYPV <- floor(YEARS_POST_VACC)+1 # add 2 since want age group vca+1
+  
+  cohort_nvacc_neg <- if((YEARS_POST_VACC<0)||((YEARS_POST_VACC)>=20)) 0 else Ntotal[as.integer(intYPV+vca),3]
+  cohort_nvacc_pos <- if((YEARS_POST_VACC<0)||((YEARS_POST_VACC)>=20)) 0 else Ntotal[as.integer(intYPV+vca),2]
+  dim(out_cohort_nvacc_neg) <- NYO
+  dim(out_cohort_nvacc_pos) <- NYO
+  initial(out_cohort_nvacc_neg[1:NYO]) <-0
+  initial(out_cohort_nvacc_pos[1:NYO]) <-0
+  update(out_cohort_nvacc_neg[1:NYO]) <- if(out_update_switch[i]==0) out_cohort_nvacc_neg[i] else cohort_nvacc_neg
+  update(out_cohort_nvacc_pos[1:NYO]) <- if(out_update_switch[i]==0) out_cohort_nvacc_pos[i] else cohort_nvacc_pos
+  
+  dim(cohort_dis_sero_unvacc) <- 4
+  dim(cohort_dis_sero_vacc) <- 4
+  dim(cohort_dis_sero_vacc_pri) <- 4
+  dim(cohort_dis_sero_vacc_secp) <- 4
+  dim(cohort_dis_sero_vacc_neg) <- 4
+  dim(cohort_dis_sero_vacc_pos) <- 4
+  
+  cohort_dis_sero_unvacc[1:4] <- if((YEARS_POST_VACC<0)||((YEARS_POST_VACC)>=20)) 0 else disease_sero[as.integer(intYPV+vca),1,i]
+  cohort_dis_sero_vacc[1:4] <- if((YEARS_POST_VACC<0)||((YEARS_POST_VACC)>=20)) 0 else sum(disease_sero[as.integer(intYPV+vca),2:3,i])
+  cohort_dis_sero_vacc_pri[1:4] <- if((YEARS_POST_VACC<0)||((YEARS_POST_VACC)>=20)) 0 else disease_sero_vacc_pri[as.integer(intYPV+vca),i]
+  cohort_dis_sero_vacc_secp[1:4] <- if((YEARS_POST_VACC<0)||((YEARS_POST_VACC)>=20)) 0 else cohort_dis_sero_vacc[i]-cohort_dis_sero_vacc_pri[i]
+  cohort_dis_sero_vacc_neg[1:4] <- if((YEARS_POST_VACC<0)||((YEARS_POST_VACC)>=20)) 0 else disease_sero[as.integer(intYPV+vca),3,i]
+  cohort_dis_sero_vacc_pos[1:4] <- if((YEARS_POST_VACC<0)||((YEARS_POST_VACC)>=20)) 0 else disease_sero[as.integer(intYPV+vca),2,i]
+
+  dim(out_cohort_dis_sero_unvacc) <- c(NYO,4)
+  dim(out_cohort_dis_sero_vacc) <- c(NYO,4)
+  dim(out_cohort_dis_sero_vacc_pri) <- c(NYO,4)
+  dim(out_cohort_dis_sero_vacc_secp) <- c(NYO,4)
+  dim(out_cohort_dis_sero_vacc_neg) <- c(NYO,4)
+  dim(out_cohort_dis_sero_vacc_pos) <- c(NYO,4)
+  
+  initial(out_cohort_dis_sero_unvacc[1:NYO,1:4]) <-0
+  initial(out_cohort_dis_sero_vacc[1:NYO,1:4]) <-0
+  initial(out_cohort_dis_sero_vacc_pri[1:NYO,1:4]) <-0
+  initial(out_cohort_dis_sero_vacc_secp[1:NYO,1:4]) <-0
+  initial(out_cohort_dis_sero_vacc_neg[1:NYO,1:4]) <-0
+  initial(out_cohort_dis_sero_vacc_pos[1:NYO,1:4]) <-0
+  
+  update(out_cohort_dis_sero_unvacc[1:NYO,1:4]) <- out_cohort_dis_sero_unvacc[i,j] + (if(out_update_switch[i]==0) 0 else cohort_dis_sero_unvacc[j])
+  update(out_cohort_dis_sero_vacc[1:NYO,1:4]) <- out_cohort_dis_sero_vacc[i,j] + (if(out_update_switch[i]==0) 0 else cohort_dis_sero_vacc[j])
+  update(out_cohort_dis_sero_vacc_pri[1:NYO,1:4]) <- out_cohort_dis_sero_vacc_pri[i,j] + (if(out_update_switch[i]==0) 0 else cohort_dis_sero_vacc_pri[j])
+  update(out_cohort_dis_sero_vacc_secp[1:NYO,1:4]) <- out_cohort_dis_sero_vacc_secp[i,j] + (if(out_update_switch[i]==0) 0 else cohort_dis_sero_vacc_secp[j])
+  update(out_cohort_dis_sero_vacc_neg[1:NYO,1:4]) <- out_cohort_dis_sero_vacc_neg[i,j] + (if(out_update_switch[i]==0) 0 else cohort_dis_sero_vacc_neg[j])
+  update(out_cohort_dis_sero_vacc_pos[1:NYO,1:4]) <- out_cohort_dis_sero_vacc_pos[i,j] + (if(out_update_switch[i]==0) 0 else cohort_dis_sero_vacc_pos[j])
+
 
   ## severe disease
   sdisease_sero[1:N_age,1,1] <- sdis_pri[1]*inf_1[i,j]+sdis_sec[1]*(inf_21[i,j]+inf_31[i,j]+inf_41[i,j])+sdis_tert[1]*(inf_231[i,j]+inf_241[i,j]+inf_341[i,j])+sdis_quart[1]*inf_2341[i,j]
@@ -925,7 +971,42 @@
   update(out_disc_sdis_all_pop[1:NYO]) <- out_disc_sdis_all_pop[i] + (if(out_update_switch[i]==0) 0 else disc_sdis_all_pop)
   update(out_disc_sdis_all_vacc[1:NYO]) <- out_disc_sdis_all_vacc[i] + (if(out_update_switch[i]==0) 0 else disc_sdis_all_vacc)
   
-
+  dim(cohort_sdis_sero_unvacc) <- 4
+  dim(cohort_sdis_sero_vacc) <- 4
+  dim(cohort_sdis_sero_vacc_pri) <- 4
+  dim(cohort_sdis_sero_vacc_secp) <- 4
+  dim(cohort_sdis_sero_vacc_neg) <- 4
+  dim(cohort_sdis_sero_vacc_pos) <- 4
+  
+  cohort_sdis_sero_unvacc[1:4] <- if((YEARS_POST_VACC<0)||((YEARS_POST_VACC)>=20)) 0 else sdisease_sero[as.integer(intYPV+vca),1,i]
+  cohort_sdis_sero_vacc[1:4] <- if((YEARS_POST_VACC<0)||((YEARS_POST_VACC)>=20)) 0 else sum(sdisease_sero[as.integer(intYPV+vca),2:3,i])
+  cohort_sdis_sero_vacc_pri[1:4] <- if((YEARS_POST_VACC<0)||((YEARS_POST_VACC)>=20)) 0 else sdisease_sero_vacc_pri[as.integer(intYPV+vca),i]
+  cohort_sdis_sero_vacc_secp[1:4] <- if((YEARS_POST_VACC<0)||((YEARS_POST_VACC)>=20)) 0 else cohort_sdis_sero_vacc[i]-cohort_sdis_sero_vacc_pri[i]
+  cohort_sdis_sero_vacc_neg[1:4] <- if((YEARS_POST_VACC<0)||((YEARS_POST_VACC)>=20)) 0 else sdisease_sero[as.integer(intYPV+vca),3,i]
+  cohort_sdis_sero_vacc_pos[1:4] <- if((YEARS_POST_VACC<0)||((YEARS_POST_VACC)>=20)) 0 else sdisease_sero[as.integer(intYPV+vca),2,i]
+  
+  dim(out_cohort_sdis_sero_unvacc) <- c(NYO,4)
+  dim(out_cohort_sdis_sero_vacc) <- c(NYO,4)
+  dim(out_cohort_sdis_sero_vacc_pri) <- c(NYO,4)
+  dim(out_cohort_sdis_sero_vacc_secp) <- c(NYO,4)
+  dim(out_cohort_sdis_sero_vacc_neg) <- c(NYO,4)
+  dim(out_cohort_sdis_sero_vacc_pos) <- c(NYO,4)
+  
+  initial(out_cohort_sdis_sero_unvacc[1:NYO,1:4]) <-0
+  initial(out_cohort_sdis_sero_vacc[1:NYO,1:4]) <-0
+  initial(out_cohort_sdis_sero_vacc_pri[1:NYO,1:4]) <-0
+  initial(out_cohort_sdis_sero_vacc_secp[1:NYO,1:4]) <-0
+  initial(out_cohort_sdis_sero_vacc_neg[1:NYO,1:4]) <-0
+  initial(out_cohort_sdis_sero_vacc_pos[1:NYO,1:4]) <-0
+  
+  update(out_cohort_sdis_sero_unvacc[1:NYO,1:4]) <- out_cohort_sdis_sero_unvacc[i,j] + (if(out_update_switch[i]==0) 0 else cohort_sdis_sero_unvacc[j])
+  update(out_cohort_sdis_sero_vacc[1:NYO,1:4]) <- out_cohort_sdis_sero_vacc[i,j] + (if(out_update_switch[i]==0) 0 else cohort_sdis_sero_vacc[j])
+  update(out_cohort_sdis_sero_vacc_pri[1:NYO,1:4]) <- out_cohort_sdis_sero_vacc_pri[i,j] + (if(out_update_switch[i]==0) 0 else cohort_sdis_sero_vacc_pri[j])
+  update(out_cohort_sdis_sero_vacc_secp[1:NYO,1:4]) <- out_cohort_sdis_sero_vacc_secp[i,j] + (if(out_update_switch[i]==0) 0 else cohort_sdis_sero_vacc_secp[j])
+  update(out_cohort_sdis_sero_vacc_neg[1:NYO,1:4]) <- out_cohort_sdis_sero_vacc_neg[i,j] + (if(out_update_switch[i]==0) 0 else cohort_sdis_sero_vacc_neg[j])
+  update(out_cohort_sdis_sero_vacc_pos[1:NYO,1:4]) <- out_cohort_sdis_sero_vacc_pos[i,j] + (if(out_update_switch[i]==0) 0 else cohort_sdis_sero_vacc_pos[j])
+  
+  
   ## years of life lost
   
   yll_sero[1:N_age,1:3,1:4] <- sdisease_sero[i,j,k]*cfr*life_expec[i]
@@ -946,8 +1027,9 @@
   yll_all_vacc_pos <- sum(yll_sero_vacc_pos)
   yll_all_vacc_pri <- sum(yll_sero_vacc_pri)  
   yll_all_vacc_secp <- sum(yll_sero_vacc_secp)
-  disc_yll_all_pop <- yll_all_pop*cum_disc
-  disc_yll_all_vacc <- yll_all_vacc*cum_disc
+  disc_yll_all_pop <- cum_disc*sum(disc_yll_all)
+  disc_yll_all_vacc <- cum_disc*(sum(disc_yll_all[,2])+sum(disc_yll_all[,3]))
+
   
   initial(out_yll_all_pop[1:NYO]) <-0
   initial(out_yll_sero_pop[1:NYO,1:4]) <-0
