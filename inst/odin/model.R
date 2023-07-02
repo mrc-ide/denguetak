@@ -79,10 +79,10 @@
   ## facility exists to have different coverage by serostatus (i.e. to model testing)
   ## variable controlling whether vaccination can vary by serostatus (0=no, 1=yes)
   vacc_by_serostatus <- user()
-  sero_test_sens <-0.8
-  sero_test_spec <- 0.98
+  sero_test_sens <-0.896 ## WHO value
+  sero_test_spec <- 0.947 ## WHO vaue
   vacc_child_coverage <- if(vacc_by_serostatus==1) gavi_cov*sero_test_sens else gavi_cov
-  vacc_child_coverage_S <- if(vacc_by_serostatus==1) gavi_cov*(1-sero_test_spec) else gavi_cov
+  vacc_child_coverage_S <- if(vacc_by_serostatus==1) gavi_cov*(1.0-sero_test_spec) else gavi_cov
   
   ## catch-up age range. If over N_age then no catch-up
   vacc_cu_minage <- N_age_p1
@@ -805,7 +805,7 @@
   dis_sero_vacc[1:4] <- sum(disease_sero[,2,i])+sum(disease_sero[,3,i])
   dis_sero_pop[1:4] <- dis_sero_unvacc[i]+dis_sero_vacc[i]
   dis_sero_vacc_pri[1:4] <- sum(disease_sero_vacc_pri[,i])
-  dis_sero_vacc_secp[1:4] <- dis_sero_vacc[i]-dis_sero_vacc_neg[i]
+  dis_sero_vacc_secp[1:4] <- dis_sero_vacc[i]-dis_sero_vacc_pri[i] ## corrected after outputs3
   dis_sero_vacc_neg[1:4] <- sum(disease_sero[,3,i])
   dis_sero_vacc_pos[1:4] <- sum(disease_sero[,2,i])
   dis_all_pop <- sum(dis_sero_pop)
@@ -924,7 +924,7 @@
   sdis_sero_vacc[1:4] <- sum(sdisease_sero[,2,i])+sum(sdisease_sero[,3,i])
   sdis_sero_pop[1:4] <- sdis_sero_unvacc[i]+sdis_sero_vacc[i]
   sdis_sero_vacc_pri[1:4] <- sum(sdisease_sero_vacc_pri[,i])
-  sdis_sero_vacc_secp[1:4] <- sdis_sero_vacc[i]-sdis_sero_vacc_neg[i]
+  sdis_sero_vacc_secp[1:4] <- sdis_sero_vacc[i]-sdis_sero_vacc_pri[i] # corrected after outputs3
   sdis_sero_vacc_neg[1:4] <- sum(sdisease_sero[,3,i])
   sdis_sero_vacc_pos[1:4] <- sum(sdisease_sero[,2,i])
   sdis_all_pop <- sum(sdis_sero_pop)

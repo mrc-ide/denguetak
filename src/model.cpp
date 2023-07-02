@@ -6645,7 +6645,7 @@ public:
       internal.dis_sero_pop[i - 1] = internal.dis_sero_unvacc[i - 1] + internal.dis_sero_vacc[i - 1];
     }
     for (int i = 1; i <= 4; ++i) {
-      internal.dis_sero_vacc_secp[i - 1] = internal.dis_sero_vacc[i - 1] - internal.dis_sero_vacc_neg[i - 1];
+      internal.dis_sero_vacc_secp[i - 1] = internal.dis_sero_vacc[i - 1] - internal.dis_sero_vacc_pri[i - 1];
     }
     real_type disc_yll_all_pop = cum_disc * odin_sum1<real_type>(internal.disc_yll_all.data(), 0, shared->dim_disc_yll_all);
     real_type disc_yll_all_vacc = cum_disc * (odin_sum2<real_type>(internal.disc_yll_all.data(), 0, shared->dim_disc_yll_all_1, 1, 2, shared->dim_disc_yll_all_1) + odin_sum2<real_type>(internal.disc_yll_all.data(), 0, shared->dim_disc_yll_all_1, 2, 3, shared->dim_disc_yll_all_1));
@@ -6695,7 +6695,7 @@ public:
       internal.sdis_sero_pop[i - 1] = internal.sdis_sero_unvacc[i - 1] + internal.sdis_sero_vacc[i - 1];
     }
     for (int i = 1; i <= 4; ++i) {
-      internal.sdis_sero_vacc_secp[i - 1] = internal.sdis_sero_vacc[i - 1] - internal.sdis_sero_vacc_neg[i - 1];
+      internal.sdis_sero_vacc_secp[i - 1] = internal.sdis_sero_vacc[i - 1] - internal.sdis_sero_vacc_pri[i - 1];
     }
     state_next[34] = exposed4 + Y4T - exposed4 * shared->DT / (real_type) shared->incub;
     for (int i = 1; i <= shared->N_age; ++i) {
@@ -7605,8 +7605,8 @@ dust::pars_type<model> dust_pars<model>(cpp11::list user) {
   shared->rho_quart = 1;
   shared->rho_sec = 1;
   shared->rho_tert = 1;
-  shared->sero_test_sens = static_cast<real_type>(0.80000000000000004);
-  shared->sero_test_spec = static_cast<real_type>(0.97999999999999998);
+  shared->sero_test_sens = static_cast<real_type>(0.89600000000000002);
+  shared->sero_test_spec = static_cast<real_type>(0.94699999999999995);
   shared->vacc_cu_coverage = 0;
   shared->vacc_cu_coverage_S = 0;
   shared->vacc_decay = 0;
