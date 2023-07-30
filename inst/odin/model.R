@@ -315,19 +315,21 @@
   ## If DoVEInf=1, assume that VE(inf) = sqrt of total protection, with all enhancement in VE(dis|inf)
   ## This is approximately consistent with findings of https://pubmed.ncbi.nlm.nih.gov/27418050/
   
-  RR_inf_vc[1:4,1:3,1:N_age] <- if((ZeroVE==0) && (DoVEInf)) 1/sqrt(1+(nc[i,j,k]/(nc50_dis[i,j]*nc50_age[k]))^ws[i]) else 1
-  RR_inf_cu[1:4,1:3,1:N_age] <- if((ZeroVE==0) && (DoVEInf) && (ageb[k]>=youngest_cu_age) && (ageb[k]<=oldest_cu_age)) 1/sqrt(1+(nc_cu[i,j]/nc50_dis[i,j]*nc50_age[k])^ws[i]) else 1
+  RR_inf_vc[1:4,1,1:N_age] <- if((ZeroVE==0) && (DoVEInf)) 1/(1+(nc[i,j,k]/(12*nc50_dis[i,j]*nc50_age[k]))^ws[i]) else 1
+  RR_inf_cu[1:4,1,1:N_age] <- if((ZeroVE==0) && (DoVEInf) && (ageb[k]>=youngest_cu_age) && (ageb[k]<=oldest_cu_age)) 1/(1+(nc_cu[i,j]/(12*nc50_dis[i,j]*nc50_age[k]))^ws[i]) else 1
   
-  RR_dis_vc[1:4,1:3,1:N_age] <- if(ZeroVE==1) 1 else if(DoVEInf) L_dis[i,j]*RR_inf_vc[i,j,k] else L_dis[i,j]/(1+(nc[i,j,k]/(nc50_dis[i,j]*nc50_age[k]))^ws[i])
-  RR_sdis_vc[1:4,1:3,1:N_age] <- if(ZeroVE==1) 1 else L_sdis[i,j]/(1+(nc[i,j,k]/(nc50_sdis[i,j]*nc50_age[k]))^ws[i])
+  RR_inf_vc[1:4,2:3,1:N_age] <- if((ZeroVE==0) && (DoVEInf)) 1/(1+(nc[i,j,k]/(3*nc50_dis[i,j]*nc50_age[k]))^ws[i]) else 1
+  RR_inf_cu[1:4,2:3,1:N_age] <- if((ZeroVE==0) && (DoVEInf) && (ageb[k]>=youngest_cu_age) && (ageb[k]<=oldest_cu_age)) 1/(1+(nc_cu[i,j]/(3*nc50_dis[i,j]*nc50_age[k]))^ws[i]) else 1
   
-  RR_dis_cu[1:4,1:3,1:N_age] <- if((ZeroVE==1) || (ageb[k]<youngest_cu_age) || (ageb[k]>oldest_cu_age)) 1 else if(DoVEInf) L_dis[i,j]*RR_inf_cu[i,j,k] else L_dis[i,j]/(1+(nc_cu[i,j]/nc50_dis[i,j]*nc50_age[k])^ws[i])
-  RR_sdis_cu[1:4,1:3,1:N_age] <- if((ZeroVE==0) && (ageb[k]>=youngest_cu_age) && (ageb[k]<=oldest_cu_age)) L_sdis[i,j]/(1+(nc_cu[i,j]/nc50_sdis[i,j]*nc50_age[k])^ws[i]) else 1
+  RR_dis_vc[1:4,1:3,1:N_age] <- if(ZeroVE==1) 1 else (L_dis[i,j]/(1+(nc[i,j,k]/(nc50_dis[i,j]*nc50_age[k]))^ws[i]))/RR_inf_vc[i,j,k] 
+  RR_sdis_vc[1:4,1:3,1:N_age] <- if(ZeroVE==1) 1 else L_sdis[i,j]/(1+(nc[i,j,k]/(nc50_sdis[i,j]*nc50_age[k]))^ws[i])/RR_inf_vc[i,j,k]
   
-
+  RR_dis_cu[1:4,1:3,1:N_age] <- if((ZeroVE==1) || (ageb[k]<youngest_cu_age) || (ageb[k]>oldest_cu_age)) 1 else L_dis[i,j]/(1+(nc_cu[i,j]/(nc50_dis[i,j]*nc50_age[k]))^ws[i])/RR_inf_cu[i,j,k]
+  RR_sdis_cu[1:4,1:3,1:N_age] <- if((ZeroVE==1) || (ageb[k]<youngest_cu_age) || (ageb[k]>oldest_cu_age)) 1 else  L_sdis[i,j]/(1+(nc_cu[i,j]/(nc50_sdis[i,j]*nc50_age[k]))^ws[i])/RR_inf_cu[i,j,k]
+  
   RR_inf[1:4,1:3,1:N_age] <- RR_inf_vc[i,j,k]*RR_inf_cu[i,j,k]
   RR_dis[1:4,1:3,1:N_age] <- RR_dis_vc[i,j,k]*RR_dis_cu[i,j,k] 
-  RR_sdis[1:4,1:3,1:N_age] <- if(DoVEInf) RR_sdis_vc[i,j,k]*RR_sdis_cu[i,j,k]/RR_inf[i,j,k] else RR_sdis_vc[i,j,k]*RR_sdis_cu[i,j,k]
+  RR_sdis[1:4,1:3,1:N_age] <- RR_sdis_vc[i,j,k]*RR_sdis_cu[i,j,k]
   
   initial(out_RR[1:4,1:3,1:N_age]) <- 0
   update(out_RR[1:4,1:3,1:N_age]) <- RR_dis[i,j,k]
