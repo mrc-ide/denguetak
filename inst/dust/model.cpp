@@ -2949,7 +2949,7 @@ public:
       internal.Ntotal_vS[i - 1] = internal.Ntotal[shared->dim_Ntotal_1 * 2 + i - 1];
     }
     for (int i = 1; i <= shared->N_age; ++i) {
-      internal.num_cu_vacc_age_neg[i - 1] = (((TIME == shared->vacc_cu_rndtime) && (i >= shared->vacc_cu_minage) && (i <= shared->vacc_cu_maxage) ? (shared->vacc_cu_coverage * shared->vacc_cu_age_weight[i - 1]) : 0)) * internal.Ntotal_nvS[i - 1];
+      internal.num_cu_vacc_age_neg[i - 1] = (((TIME == shared->vacc_cu_rndtime) && (shared->ageb[i - 1] >= shared->vacc_cu_minage) && (shared->ageb[i - 1] <= shared->vacc_cu_maxage) ? (shared->vacc_cu_coverage * shared->vacc_cu_age_weight[i - 1]) : 0)) * internal.Ntotal_nvS[i - 1];
     }
     real_type oldest_cu_age = (shared->vacc_cu_minage <= shared->N_age ? shared->ageb[static_cast<int>(shared->vacc_cu_maxage + 1) - 1] + dust::math::floor(YEAR - shared->vacc_cu_time) : 1000);
     real_type prop_seroneg_at_9 = (S[shared->dim_S_1 * 0 + 9] + S[shared->dim_S_1 * 1 + 9] + S[shared->dim_S_1 * 2 + 9]) / (real_type) (internal.Ntotal[shared->dim_Ntotal_1 * 0 + 9] + internal.Ntotal[shared->dim_Ntotal_1 * 1 + 9] + internal.Ntotal[shared->dim_Ntotal_1 * 2 + 9]);
@@ -3003,7 +3003,7 @@ public:
     real_type NTv = odin_sum1<real_type>(internal.Ntotal_v.data(), 0, shared->dim_Ntotal_v);
     real_type NTvS = odin_sum1<real_type>(internal.Ntotal_vS.data(), 0, shared->dim_Ntotal_vS);
     for (int i = 1; i <= shared->N_age; ++i) {
-      internal.num_cu_vacc_age[i - 1] = (((TIME == shared->vacc_cu_rndtime) && (i >= shared->vacc_cu_minage) && (i <= shared->vacc_cu_maxage) ? (shared->vacc_cu_coverage * shared->vacc_cu_age_weight[i - 1]) : 0)) * internal.Ntotal_nv[i - 1];
+      internal.num_cu_vacc_age[i - 1] = (((TIME == shared->vacc_cu_rndtime) && (shared->ageb[i - 1] >= shared->vacc_cu_minage) && (shared->ageb[i - 1] <= shared->vacc_cu_maxage) ? (shared->vacc_cu_coverage * shared->vacc_cu_age_weight[i - 1]) : 0)) * internal.Ntotal_nv[i - 1];
     }
     for (int i = 1; i <= shared->N_age; ++i) {
       internal.time_from_last_dose_base[i - 1] = ((YEAR >= internal.vacc_ct[i - 1]) && (YEAR < internal.vacc_ct[i - 1] + static_cast<real_type>(0.25)) ? shared->YL * (YEAR - internal.vacc_ct[i - 1]) : (YEAR >= internal.vacc_ct[i - 1] + static_cast<real_type>(0.25) ? shared->YL * (YEAR - internal.vacc_ct[i - 1] - static_cast<real_type>(0.25)) : 0));
@@ -7538,7 +7538,7 @@ dust::pars_type<model> dust_pars<model>(cpp11::list user) {
   shared->initial_Y2T_out = 0;
   shared->initial_Y3T_out = 0;
   shared->initial_Y4T_out = 0;
-  shared->N_age = 28;
+  shared->N_age = 40;
   shared->NUM_YEAR_ACCUM = 4;
   shared->NYO = 20;
   shared->PI_C = static_cast<real_type>(3.1415926535900001);
@@ -9357,10 +9357,14 @@ dust::pars_type<model> dust_pars<model>(cpp11::list user) {
   shared->offset_variable_VE_seropos_multi = shared->dim_cum_infection_pri + shared->dim_cum_infection_priV + shared->dim_cum_infection_sec + shared->dim_cum_infection_secV + shared->dim_cum_infection_tq + shared->dim_cum_infection_tqV + shared->dim_Ntotal_out + shared->dim_out_time_from_last_dose + shared->dim_VE_seroneg + shared->dim_VE_seropos_mono + 47;
   shared->vacc_cu_maxage = shared->N_age_p1;
   shared->vacc_cu_minage = shared->N_age_p1;
-  for (int i = 1; i <= 20; ++i) {
+  for (int i = 1; i <= 33; ++i) {
     shared->agec[i - 1] = 1;
   }
-  for (int i = 21; i <= 28; ++i) {
+  {
+     int i = 34;
+     shared->agec[i - 1] = 7;
+  }
+  for (int i = 35; i <= 40; ++i) {
     shared->agec[i - 1] = 10;
   }
   shared->ageb = std::vector<real_type>(shared->dim_ageb);

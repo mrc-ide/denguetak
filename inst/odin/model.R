@@ -14,10 +14,15 @@
   NUM_YEAR_ACCUM <- 4 ## time to accumulate incidence for a couple of output variables
   
   age_per <- YL ## how frequently aging occurs - needs to be year length for precise match to demography
-  N_age <- 28 ## number of age classes
+  # N_age <- 28 ## number of age classes
+  # N_age_p1 <- N_age + 1
+  # agec[1:20] <- 1 ## first 20 are 1 year wide
+  # agec[21:28] <- 10 ## then next 8 are 10 years wide
+  N_age <- 40 ## number of age classes
   N_age_p1 <- N_age + 1
-  agec[1:20] <- 1 ## first 20 are 1 year wide
-  agec[21:28] <- 10 ## then next 8 are 10 years wide
+  agec[1:33] <- 1 ## first 33 are 1 year wide
+  agec[34] <-7 ### then 7 years
+  agec[35:40] <- 10 ## then next 8 are 10 years wide
   ## lower boundary of each age class. Extra entry gives upper boundary of last age class 
   ageb[1] <- 0
   ageb[2:(N_age_p1)] <- ageb[i-1]+agec[i-1]
@@ -1071,8 +1076,8 @@
   ## count vaccinated
   num_child_vacc_age[1:N_age] <- (if((YEARS_POST_VACC>=0) && (YEAR<vacc_child_stoptime) && (i == vacc_child_age)) (vacc_child_coverage) else 0)*Ntotal_nv[i]*agert[i]
   num_child_vacc_age_neg[1:N_age] <- (if((YEARS_POST_VACC>=0) && (YEAR<vacc_child_stoptime) && (i == vacc_child_age)) (vacc_child_coverage) else 0)*Ntotal_nvS[i]*agert[i]
-  num_cu_vacc_age[1:N_age] <- (if((TIME == vacc_cu_rndtime) && (i>=vacc_cu_minage) && (i<=vacc_cu_maxage)) (vacc_cu_coverage*vacc_cu_age_weight[i]) else 0)*Ntotal_nv[i]
-  num_cu_vacc_age_neg[1:N_age] <- (if((TIME == vacc_cu_rndtime) && (i>=vacc_cu_minage) && (i<=vacc_cu_maxage)) (vacc_cu_coverage*vacc_cu_age_weight[i]) else 0)*Ntotal_nvS[i]
+  num_cu_vacc_age[1:N_age] <- (if((TIME == vacc_cu_rndtime) && (ageb[i]>=vacc_cu_minage) && (ageb[i]<=vacc_cu_maxage)) (vacc_cu_coverage*vacc_cu_age_weight[i]) else 0)*Ntotal_nv[i]
+  num_cu_vacc_age_neg[1:N_age] <- (if((TIME == vacc_cu_rndtime) && (ageb[i]>=vacc_cu_minage) && (ageb[i]<=vacc_cu_maxage)) (vacc_cu_coverage*vacc_cu_age_weight[i]) else 0)*Ntotal_nvS[i]
   
   num_child_vacc_sum <- (sum(num_child_vacc_age)+sum(num_cu_vacc_age))
   num_child_vacc_sum_neg <- (sum(num_child_vacc_age_neg)+sum(num_cu_vacc_age_neg))
