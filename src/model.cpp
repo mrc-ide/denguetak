@@ -2994,7 +2994,7 @@ public:
     for (int i = 1; i <= shared->N_age; ++i) {
       internal.cur_age_rate[i - 1] = shared->age_rate_d[shared->dim_age_rate_d_1 * (1 + i - 1) + static_cast<int>(year_row) - 1];
     }
-    for (int i = 1; i <= 28; ++i) {
+    for (int i = 1; i <= shared->N_age; ++i) {
       internal.death[i - 1] = shared->age_removal_d[shared->dim_age_removal_d_1 * (1 + i - 1) + static_cast<int>(year_row) - 1];
     }
     {
@@ -3056,7 +3056,6 @@ public:
     for (int i = 1; i <= shared->N_age; ++i) {
       internal.agert[i - 1] = internal.cur_age_rate[i - 1] * agerts;
     }
-    real_type births = shared->pop_scale * Nb * shared->DT / (real_type) shared->YL;
     for (int i = 1; i <= shared->N_age; ++i) {
       internal.deathrt[i - 1] = internal.death[i - 1] / (real_type) shared->YL * shared->DT;
     }
@@ -3095,6 +3094,7 @@ public:
     state_next[26] = prop_seroneg_at_vca;
     real_type vacc_child_coverage = (shared->vacc_by_serostatus == 1 ? gavi_cov * shared->sero_test_sens : gavi_cov);
     real_type vacc_child_coverage_S = (shared->vacc_by_serostatus == 1 ? gavi_cov * (1 - shared->sero_test_spec) : gavi_cov);
+    real_type births = shared->pop_scale * Nb * shared->DT / (real_type) shared->YL;
     for (int i = 1; i <= shared->N_age; ++i) {
       internal.FOI1a[i - 1] = shared->FOIas[i - 1] * FOI1;
     }
@@ -3325,10 +3325,6 @@ public:
     }
     real_type Lwb_mature = (shared->DT * shared->epsilon / (real_type) (shared->DT * shared->epsilon + L_deathrt)) * (O_Lwb);
     real_type Lwt_mature = (shared->DT * shared->epsilon / (real_type) (shared->DT * shared->epsilon + L_deathrt)) * (O_Lwt);
-    real_type Mwt_FOI1 = shared->DT * shared->Beta_hm_1 * shared->kappa * infectious1;
-    real_type Mwt_FOI2 = shared->DT * shared->Beta_hm_2 * shared->kappa * infectious2;
-    real_type Mwt_FOI3 = shared->DT * shared->Beta_hm_3 * shared->kappa * infectious3;
-    real_type Mwt_FOI4 = shared->DT * shared->Beta_hm_4 * shared->kappa * infectious4;
     for (int i = 1; i <= 4; ++i) {
       for (int j = 1; j <= 3; ++j) {
         for (int k = 1; k <= shared->N_age; ++k) {
@@ -3529,13 +3525,7 @@ public:
          internal.age_R1234[i - 1 + shared->dim_age_R1234_1 * (j - 1)] = 0;
        }
     }
-    real_type Mwb_FOI1 = shared->Wb_relsusc1 * Mwt_FOI1;
-    real_type Mwb_FOI2 = shared->Wb_relsusc2 * Mwt_FOI2;
-    real_type Mwb_FOI3 = shared->Wb_relsusc3 * Mwt_FOI3;
-    real_type Mwb_FOI4 = shared->Wb_relsusc4 * Mwt_FOI4;
-    real_type Mwb_intro = ((TIME >= shared->Wb_introtime * shared->YL) && (TIME < shared->Wb_introtime * shared->YL + shared->Wb_introduration) ? (shared->Wb_introrate) : 0);
     real_type num_child_vacc_sum_pos = num_child_vacc_sum - num_child_vacc_sum_neg;
-    real_type O_Mwt_S = (shared->DT * shared->delta + Mwt_FOI1 + Mwt_FOI2 + Mwt_FOI3 + Mwt_FOI4) * (Mwt_S);
     for (int i = 1; i <= 4; ++i) {
       int j = 1;
       for (int k = 1; k <= shared->N_age; ++k) {
@@ -3565,7 +3555,11 @@ public:
     for (int i = 1; i <= shared->NYO; ++i) {
       state_next[shared->offset_variable_out_nvacc_all_pop + i - 1] = out_nvacc_all_pop[i - 1] + ((internal.out_update_switch[i - 1] == 0 ? 0 : num_child_vacc_sum));
     }
-    real_type Mwt_inf1 = (Mwt_FOI1 / (real_type) (shared->DT * shared->delta + Mwt_FOI1 + Mwt_FOI2 + Mwt_FOI3 + Mwt_FOI4)) * (O_Mwt_S);
+    real_type Mwb_intro = ((TIME >= shared->Wb_introtime * shared->YL) && (TIME < shared->Wb_introtime * shared->YL + shared->Wb_introduration) ? (shared->Wb_introrate) : 0);
+    real_type Mwt_FOI1 = shared->DT * shared->Beta_hm_1 * shared->kappa * infectious1;
+    real_type Mwt_FOI2 = shared->DT * shared->Beta_hm_2 * shared->kappa * infectious2;
+    real_type Mwt_FOI3 = shared->DT * shared->Beta_hm_3 * shared->kappa * infectious3;
+    real_type Mwt_FOI4 = shared->DT * shared->Beta_hm_4 * shared->kappa * infectious4;
     for (int i = 2; i <= shared->N_age; ++i) {
       int j = 1;
       internal.nvacc_R1234[i - 1 + shared->dim_nvacc_R1234_1 * (j - 1)] = dust::random::binomial<real_type>(rng_state, internal.age_R1234[shared->dim_age_R1234_1 * (j - 1) + i - 1], internal.vacc_noncov[shared->dim_vacc_noncov_1 * (j - 1) + i - 1]);
@@ -3583,7 +3577,6 @@ public:
       int j = 3;
       internal.nvacc_R1234[i - 1 + shared->dim_nvacc_R1234_1 * (j - 1)] = internal.age_R1234[shared->dim_age_R1234_1 * (j - 1) + i - 1];
     }
-    real_type O_Mwb_S = (shared->DT * shared->delta_wb + Mwb_FOI1 + Mwb_FOI2 + Mwb_FOI3 + Mwb_FOI4) * (Mwb_S);
     for (int i = 1; i <= 4; ++i) {
       for (int j = 1; j <= 3; ++j) {
         for (int k = 1; k <= shared->N_age; ++k) {
@@ -3605,17 +3598,19 @@ public:
         }
       }
     }
-    state_next[1] = Lwt_mature + Mwt_S - O_Mwt_S;
     for (int i = 1; i <= shared->NYO; ++i) {
       state_next[shared->offset_variable_out_nvacc_all_pos + i - 1] = out_nvacc_all_pos[i - 1] + ((internal.out_update_switch[i - 1] == 0 ? 0 : num_child_vacc_sum_pos));
     }
-    real_type Mwb_inf1 = (Mwb_FOI1 / (real_type) (shared->DT * shared->delta_wb + Mwb_FOI1 + Mwb_FOI2 + Mwb_FOI3 + Mwb_FOI4)) * (O_Mwb_S);
-    real_type Mwt_inf2 = (Mwt_FOI2 / (real_type) (shared->DT * shared->delta + Mwt_FOI2 + Mwt_FOI3 + Mwt_FOI4)) * (O_Mwt_S - Mwt_inf1);
+    real_type Mwb_FOI1 = shared->Wb_relsusc1 * Mwt_FOI1;
+    real_type Mwb_FOI2 = shared->Wb_relsusc2 * Mwt_FOI2;
+    real_type Mwb_FOI3 = shared->Wb_relsusc3 * Mwt_FOI3;
+    real_type Mwb_FOI4 = shared->Wb_relsusc4 * Mwt_FOI4;
     for (int i = 1; i <= shared->N_age; ++i) {
       for (int j = 1; j <= 3; ++j) {
         internal.n_R1234[i - 1 + shared->dim_n_R1234_1 * (j - 1)] = internal.nvacc_R1234[shared->dim_nvacc_R1234_1 * (j - 1) + i - 1] + R1234[shared->dim_R1234_1 * (j - 1) + i - 1] - internal.O_R1234[shared->dim_O_R1234_1 * (j - 1) + i - 1] + internal.recov_1234[shared->dim_recov_1234_1 * (j - 1) + i - 1] + internal.recov_1243[shared->dim_recov_1243_1 * (j - 1) + i - 1] + internal.recov_1342[shared->dim_recov_1342_1 * (j - 1) + i - 1] + internal.recov_2341[shared->dim_recov_2341_1 * (j - 1) + i - 1] - internal.age_R1234[shared->dim_age_R1234_1 * (j - 1) + i + 1 - 1];
       }
     }
+    real_type O_Mwt_S = (shared->DT * shared->delta + Mwt_FOI1 + Mwt_FOI2 + Mwt_FOI3 + Mwt_FOI4) * (Mwt_S);
     for (int i = 1; i <= shared->N_age; ++i) {
       int j = 1;
       internal.rho1[i - 1 + shared->dim_rho1_1 * (j - 1)] = shared->rho_pri;
@@ -3918,13 +3913,11 @@ public:
         }
       }
     }
-    state_next[11] = Lwb_mature + Mwb_intro + Mwb_S - O_Mwb_S;
-    state_next[2] = Mwt_inf1 + Mwt_E1 - O_Mwt_E1;
-    real_type Mwb_inf2 = (Mwb_FOI2 / (real_type) (shared->DT * shared->delta_wb + Mwb_FOI2 + Mwb_FOI3 + Mwb_FOI4)) * (O_Mwb_S - Mwb_inf1);
-    real_type Mwt_inf3 = (Mwt_FOI3 / (real_type) (shared->DT * shared->delta + Mwt_FOI3 + Mwt_FOI4)) * (O_Mwt_S - Mwt_inf1 - Mwt_inf2);
+    real_type Mwt_inf1 = (Mwt_FOI1 / (real_type) (shared->DT * shared->delta + Mwt_FOI1 + Mwt_FOI2 + Mwt_FOI3 + Mwt_FOI4)) * (O_Mwt_S);
     for (int i = 1; i <= shared->N_age; ++i) {
       internal.ncu_R1234[i - 1] = dust::random::binomial<real_type>(rng_state, internal.n_R1234[shared->dim_n_R1234_1 * 0 + i - 1], internal.vcu_noncov[shared->dim_vcu_noncov_1 * 0 + i - 1]);
     }
+    real_type O_Mwb_S = (shared->DT * shared->delta_wb + Mwb_FOI1 + Mwb_FOI2 + Mwb_FOI3 + Mwb_FOI4) * (Mwb_S);
     for (int i = 1; i <= shared->N_age; ++i) {
       for (int j = 1; j <= 3; ++j) {
         internal.O_R1[i - 1 + shared->dim_O_R1_1 * (j - 1)] = dust::random::binomial<real_type>(rng_state, (R1[shared->dim_R1_1 * (j - 1) + i - 1]), (internal.rho12[shared->dim_rho12_1 * (j - 1) + i - 1] * internal.FOI2a[i - 1] + internal.rho13[shared->dim_rho13_1 * (j - 1) + i - 1] * internal.FOI3a[i - 1] + internal.rho14[shared->dim_rho14_1 * (j - 1) + i - 1] * internal.FOI4a[i - 1] + internal.deathrt[i - 1]));
@@ -4000,8 +3993,7 @@ public:
         internal.O_S[i - 1 + shared->dim_O_S_1 * (j - 1)] = dust::random::binomial<real_type>(rng_state, (S[shared->dim_S_1 * (j - 1) + i - 1]), (internal.rho1[shared->dim_rho1_1 * (j - 1) + i - 1] * internal.FOI1a[i - 1] + internal.rho2[shared->dim_rho2_1 * (j - 1) + i - 1] * internal.FOI2a[i - 1] + internal.rho3[shared->dim_rho3_1 * (j - 1) + i - 1] * internal.FOI3a[i - 1] + internal.rho4[shared->dim_rho4_1 * (j - 1) + i - 1] * internal.FOI4a[i - 1] + internal.deathrt[i - 1]));
       }
     }
-    state_next[12] = Mwb_inf1 + Mwb_E1 - O_Mwb_E1;
-    state_next[3] = Mwt_inf2 + Mwt_E2 - O_Mwt_E2;
+    state_next[1] = Lwt_mature + Mwt_S - O_Mwt_S;
     for (int i = 1; i <= 4; ++i) {
       for (int j = 1; j <= 3; ++j) {
         for (int k = 1; k <= shared->N_age; ++k) {
@@ -4266,10 +4258,10 @@ public:
         internal.inf_41[i - 1 + shared->dim_inf_41_1 * (j - 1)] = dust::random::binomial<real_type>(rng_state, (internal.O_R4[shared->dim_O_R4_1 * (j - 1) + i - 1]), (internal.rho41[shared->dim_rho41_1 * (j - 1) + i - 1] * internal.FOI1a[i - 1] / (real_type) (internal.rho41[shared->dim_rho41_1 * (j - 1) + i - 1] * internal.FOI1a[i - 1] + internal.rho42[shared->dim_rho42_1 * (j - 1) + i - 1] * internal.FOI2a[i - 1] + internal.rho43[shared->dim_rho43_1 * (j - 1) + i - 1] * internal.FOI3a[i - 1] + internal.deathrt[i - 1])));
       }
     }
-    real_type Mwb_inf3 = (Mwb_FOI3 / (real_type) (shared->DT * shared->delta_wb + Mwb_FOI3 + Mwb_FOI4)) * (O_Mwb_S - Mwb_inf1 - Mwb_inf2);
-    real_type Mwt_inf4 = (Mwt_FOI4 / (real_type) (shared->DT * shared->delta + Mwt_FOI4)) * (O_Mwt_S - Mwt_inf1 - Mwt_inf2 - Mwt_inf3);
-    state_next[13] = Mwb_inf2 + Mwb_E2 - O_Mwb_E2;
-    state_next[4] = Mwt_inf3 + Mwt_E3 - O_Mwt_E3;
+    real_type Mwb_inf1 = (Mwb_FOI1 / (real_type) (shared->DT * shared->delta_wb + Mwb_FOI1 + Mwb_FOI2 + Mwb_FOI3 + Mwb_FOI4)) * (O_Mwb_S);
+    real_type Mwt_inf2 = (Mwt_FOI2 / (real_type) (shared->DT * shared->delta + Mwt_FOI2 + Mwt_FOI3 + Mwt_FOI4)) * (O_Mwt_S - Mwt_inf1);
+    state_next[11] = Lwb_mature + Mwb_intro + Mwb_S - O_Mwb_S;
+    state_next[2] = Mwt_inf1 + Mwt_E1 - O_Mwt_E1;
     for (int i = 1; i <= shared->N_age; ++i) {
       int j = 1;
       state_next[shared->offset_variable_R1234 + i - 1 + shared->dim_R1234_1 * (j - 1)] = internal.ncu_R1234[i - 1];
@@ -4503,7 +4495,8 @@ public:
       int j = 3;
       internal.infV_1[i - 1 + shared->dim_infV_1_1 * (j - 1)] = internal.inf_1[shared->dim_inf_1_1 * (j - 1) + i - 1];
     }
-    real_type Mwb_inf4 = (Mwb_FOI4 / (real_type) (shared->DT * shared->delta_wb + Mwb_FOI4)) * (O_Mwb_S - Mwb_inf1 - Mwb_inf2 - Mwb_inf3);
+    real_type Mwb_inf2 = (Mwb_FOI2 / (real_type) (shared->DT * shared->delta_wb + Mwb_FOI2 + Mwb_FOI3 + Mwb_FOI4)) * (O_Mwb_S - Mwb_inf1);
+    real_type Mwt_inf3 = (Mwt_FOI3 / (real_type) (shared->DT * shared->delta + Mwt_FOI3 + Mwt_FOI4)) * (O_Mwt_S - Mwt_inf1 - Mwt_inf2);
     for (int i = 2; i <= shared->N_age; ++i) {
       int j = 1;
       internal.nvacc_R1[i - 1 + shared->dim_nvacc_R1_1 * (j - 1)] = dust::random::binomial<real_type>(rng_state, internal.age_R1[shared->dim_age_R1_1 * (j - 1) + i - 1], internal.vacc_noncov[shared->dim_vacc_noncov_1 * (j - 1) + i - 1]);
@@ -4759,8 +4752,8 @@ public:
       int j = 3;
       internal.nvacc_S[i - 1 + shared->dim_nvacc_S_1 * (j - 1)] = internal.age_S[shared->dim_age_S_1 * (j - 1) + i - 1] + internal.age_S[shared->dim_age_S_1 * 0 + i - 1] - internal.nvacc_S[shared->dim_nvacc_S_1 * 0 + i - 1];
     }
-    state_next[14] = Mwb_inf3 + Mwb_E3 - O_Mwb_E3;
-    state_next[5] = Mwt_inf4 + Mwt_E4 - O_Mwt_E4;
+    state_next[12] = Mwb_inf1 + Mwb_E1 - O_Mwb_E1;
+    state_next[3] = Mwt_inf2 + Mwt_E2 - O_Mwt_E2;
     for (int i = 1; i <= shared->N_age; ++i) {
       int j = 1;
       internal.Y1[i - 1 + shared->dim_Y1_1 * (j - 1)] = shared->phi_pri[0] * (1 + shared->dis_pri[0] * shared->phi_ed) * internal.inf_1[shared->dim_inf_1_1 * (j - 1) + i - 1] + shared->phi_sec[0] * (1 + shared->dis_sec[0] * shared->phi_ed) * (internal.inf_21[shared->dim_inf_21_1 * (j - 1) + i - 1] + internal.inf_31[shared->dim_inf_31_1 * (j - 1) + i - 1] + internal.inf_41[shared->dim_inf_41_1 * (j - 1) + i - 1]) + shared->phi_tert[0] * (1 + shared->dis_tert[0] * shared->phi_ed) * (internal.inf_231[shared->dim_inf_231_1 * (j - 1) + i - 1] + internal.inf_241[shared->dim_inf_241_1 * (j - 1) + i - 1] + internal.inf_341[shared->dim_inf_341_1 * (j - 1) + i - 1]) + shared->phi_quart[0] * (1 + shared->dis_quart[0] * shared->phi_ed) * internal.inf_2341[shared->dim_inf_2341_1 * (j - 1) + i - 1];
@@ -4933,6 +4926,8 @@ public:
       int j = 3;
       internal.infV_2[i - 1 + shared->dim_infV_2_1 * (j - 1)] = internal.inf_2[shared->dim_inf_2_1 * (j - 1) + i - 1];
     }
+    real_type Mwb_inf3 = (Mwb_FOI3 / (real_type) (shared->DT * shared->delta_wb + Mwb_FOI3 + Mwb_FOI4)) * (O_Mwb_S - Mwb_inf1 - Mwb_inf2);
+    real_type Mwt_inf4 = (Mwt_FOI4 / (real_type) (shared->DT * shared->delta + Mwt_FOI4)) * (O_Mwt_S - Mwt_inf1 - Mwt_inf2 - Mwt_inf3);
     for (int i = 1; i <= shared->N_age; ++i) {
       for (int j = 1; j <= 3; ++j) {
         internal.n_R1[i - 1 + shared->dim_n_R1_1 * (j - 1)] = internal.nvacc_R1[shared->dim_nvacc_R1_1 * (j - 1) + i - 1] + R1[shared->dim_R1_1 * (j - 1) + i - 1] - internal.O_R1[shared->dim_O_R1_1 * (j - 1) + i - 1] + internal.recov_1[shared->dim_recov_1_1 * (j - 1) + i - 1] - internal.age_R1[shared->dim_age_R1_1 * (j - 1) + i + 1 - 1];
@@ -5246,7 +5241,8 @@ public:
       int j = 3;
       internal.nvacc_I41[i - 1 + shared->dim_nvacc_I41_1 * (j - 1)] = internal.age_I41[shared->dim_age_I41_1 * (j - 1) + i - 1];
     }
-    state_next[15] = Mwb_inf4 + Mwb_E4 - O_Mwb_E4;
+    state_next[13] = Mwb_inf2 + Mwb_E2 - O_Mwb_E2;
+    state_next[4] = Mwt_inf3 + Mwt_E3 - O_Mwt_E3;
     real_type Y1T = odin_sum1<real_type>(internal.Y1.data(), 0, shared->dim_Y1) / (real_type) NT;
     for (int i = 1; i <= shared->N_age; ++i) {
       int j = 1;
@@ -5334,6 +5330,7 @@ public:
       int j = 3;
       internal.infV_3[i - 1 + shared->dim_infV_3_1 * (j - 1)] = internal.inf_3[shared->dim_inf_3_1 * (j - 1) + i - 1];
     }
+    real_type Mwb_inf4 = (Mwb_FOI4 / (real_type) (shared->DT * shared->delta_wb + Mwb_FOI4)) * (O_Mwb_S - Mwb_inf1 - Mwb_inf2 - Mwb_inf3);
     for (int i = 1; i <= shared->N_age; ++i) {
       for (int j = 1; j <= 3; ++j) {
         internal.n_I12[i - 1 + shared->dim_n_I12_1 * (j - 1)] = internal.nvacc_I12[shared->dim_nvacc_I12_1 * (j - 1) + i - 1] + I12[shared->dim_I12_1 * (j - 1) + i - 1] - internal.O_I12[shared->dim_O_I12_1 * (j - 1) + i - 1] + internal.inf_12[shared->dim_inf_12_1 * (j - 1) + i - 1] - internal.age_I12[shared->dim_age_I12_1 * (j - 1) + i + 1 - 1];
@@ -5643,6 +5640,8 @@ public:
       state_next[shared->offset_variable_cum_infection_tqV + i - 1] = cum_infection_tqV[i - 1] + internal.infection_tq[shared->dim_infection_tq_1 * 1 + i - 1] + internal.infection_tq[shared->dim_infection_tq_1 * 2 + i - 1];
     }
     state_next[31] = exposed1 + Y1T - exposed1 * shared->DT / (real_type) shared->incub;
+    state_next[14] = Mwb_inf3 + Mwb_E3 - O_Mwb_E3;
+    state_next[5] = Mwt_inf4 + Mwt_E4 - O_Mwt_E4;
     state_next[27] = Y1T;
     for (int i = 1; i <= shared->N_age; ++i) {
       internal.vw_R1[i - 1] = dust::random::binomial<real_type>(rng_state, internal.n_R1[shared->dim_n_R1_1 * 1 + i - 1], shared->vacc_decay);
@@ -6036,6 +6035,7 @@ public:
       state_next[shared->offset_variable_cum_infection_secV + i - 1] = cum_infection_secV[i - 1] + internal.infection_sec[shared->dim_infection_sec_1 * 1 + i - 1] + internal.infection_sec[shared->dim_infection_sec_1 * 2 + i - 1];
     }
     state_next[32] = exposed2 + Y2T - exposed2 * shared->DT / (real_type) shared->incub;
+    state_next[15] = Mwb_inf4 + Mwb_E4 - O_Mwb_E4;
     for (int i = 1; i <= shared->N_age; ++i) {
       int j = 1;
       state_next[shared->offset_variable_R1 + i - 1 + shared->dim_R1_1 * (j - 1)] = internal.ncu_R1[i - 1];
@@ -7493,10 +7493,6 @@ dust::pars_type<model> dust_pars<model>(cpp11::list user) {
   auto shared = std::make_shared<model::shared_type>();
   model::internal_type internal;
   shared->Acrit = 3;
-  shared->dim_age_rate_d_1 = 151;
-  shared->dim_age_rate_d_2 = 29;
-  shared->dim_age_removal_d_1 = 151;
-  shared->dim_age_removal_d_2 = 29;
   shared->dim_births_d_1 = 151;
   shared->dim_births_d_2 = 2;
   shared->dim_cohort_dis_sero_unvacc = 4;
@@ -7530,8 +7526,6 @@ dust::pars_type<model> dust_pars<model>(cpp11::list user) {
   shared->dim_L_dis_2 = 3;
   shared->dim_L_sdis_1 = 4;
   shared->dim_L_sdis_2 = 3;
-  shared->dim_life_expec_d_1 = 151;
-  shared->dim_life_expec_d_2 = 29;
   shared->dim_nc_cu_1 = 4;
   shared->dim_nc_cu_2 = 3;
   shared->dim_nc0_1 = 4;
@@ -7547,7 +7541,6 @@ dust::pars_type<model> dust_pars<model>(cpp11::list user) {
   shared->dim_phi_scale = 4;
   shared->dim_phi_sec = 4;
   shared->dim_phi_tert = 4;
-  shared->dim_pop_size_d = 29;
   shared->dim_sdis_pri = 4;
   shared->dim_sdis_quart = 4;
   shared->dim_sdis_sec = 4;
@@ -7676,8 +7669,6 @@ dust::pars_type<model> dust_pars<model>(cpp11::list user) {
   internal.yll_sero_vacc_pos = std::vector<real_type>(shared->dim_yll_sero_vacc_pos);
   internal.yll_sero_vacc_pri = std::vector<real_type>(shared->dim_yll_sero_vacc_pri);
   internal.yll_sero_vacc_secp = std::vector<real_type>(shared->dim_yll_sero_vacc_secp);
-  shared->dim_age_rate_d = shared->dim_age_rate_d_1 * shared->dim_age_rate_d_2;
-  shared->dim_age_removal_d = shared->dim_age_removal_d_1 * shared->dim_age_removal_d_2;
   shared->dim_agec = shared->N_age;
   shared->dim_agert = shared->N_age;
   shared->dim_births_d = shared->dim_births_d_1 * shared->dim_births_d_2;
@@ -7849,7 +7840,6 @@ dust::pars_type<model> dust_pars<model>(cpp11::list user) {
   shared->dim_L_dis = shared->dim_L_dis_1 * shared->dim_L_dis_2;
   shared->dim_L_sdis = shared->dim_L_sdis_1 * shared->dim_L_sdis_2;
   shared->dim_life_expec = shared->N_age;
-  shared->dim_life_expec_d = shared->dim_life_expec_d_1 * shared->dim_life_expec_d_2;
   shared->dim_mean_age = shared->N_age;
   shared->dim_n_I1_1 = shared->N_age;
   shared->dim_n_I1_2 = 3;
@@ -8854,6 +8844,10 @@ dust::pars_type<model> dust_pars<model>(cpp11::list user) {
   shared->dim_age_R34_2 = 3;
   shared->dim_age_R4_1 = shared->N_age_p1;
   shared->dim_age_R4_2 = 3;
+  shared->dim_age_rate_d_1 = 151;
+  shared->dim_age_rate_d_2 = shared->N_age_p1;
+  shared->dim_age_removal_d_1 = 151;
+  shared->dim_age_removal_d_2 = shared->N_age_p1;
   shared->dim_age_S_1 = shared->N_age_p1;
   shared->dim_age_S_2 = 3;
   shared->dim_ageb = shared->N_age_p1;
@@ -8932,6 +8926,8 @@ dust::pars_type<model> dust_pars<model>(cpp11::list user) {
   shared->dim_infV_2 = shared->dim_infV_2_1 * shared->dim_infV_2_2;
   shared->dim_infV_3 = shared->dim_infV_3_1 * shared->dim_infV_3_2;
   shared->dim_infV_4 = shared->dim_infV_4_1 * shared->dim_infV_4_2;
+  shared->dim_life_expec_d_1 = 151;
+  shared->dim_life_expec_d_2 = shared->N_age_p1;
   shared->dim_n_I1 = shared->dim_n_I1_1 * shared->dim_n_I1_2;
   shared->dim_n_I12 = shared->dim_n_I12_1 * shared->dim_n_I12_2;
   shared->dim_n_I123 = shared->dim_n_I123_1 * shared->dim_n_I123_2;
@@ -9116,6 +9112,7 @@ dust::pars_type<model> dust_pars<model>(cpp11::list user) {
   shared->dim_out_yll_sero_vacc_pos = shared->dim_out_yll_sero_vacc_pos_1 * shared->dim_out_yll_sero_vacc_pos_2;
   shared->dim_out_yll_sero_vacc_pri = shared->dim_out_yll_sero_vacc_pri_1 * shared->dim_out_yll_sero_vacc_pri_2;
   shared->dim_out_yll_sero_vacc_secp = shared->dim_out_yll_sero_vacc_secp_1 * shared->dim_out_yll_sero_vacc_secp_2;
+  shared->dim_pop_size_d = shared->N_age_p1;
   shared->dim_R1 = shared->dim_R1_1 * shared->dim_R1_2;
   shared->dim_R12 = shared->dim_R12_1 * shared->dim_R12_2;
   shared->dim_R123 = shared->dim_R123_1 * shared->dim_R123_2;
@@ -9841,7 +9838,10 @@ dust::pars_type<model> dust_pars<model>(cpp11::list user) {
   shared->dim_age_R3 = shared->dim_age_R3_1 * shared->dim_age_R3_2;
   shared->dim_age_R34 = shared->dim_age_R34_1 * shared->dim_age_R34_2;
   shared->dim_age_R4 = shared->dim_age_R4_1 * shared->dim_age_R4_2;
+  shared->dim_age_rate_d = shared->dim_age_rate_d_1 * shared->dim_age_rate_d_2;
+  shared->dim_age_removal_d = shared->dim_age_removal_d_1 * shared->dim_age_removal_d_2;
   shared->dim_age_S = shared->dim_age_S_1 * shared->dim_age_S_2;
+  shared->dim_life_expec_d = shared->dim_life_expec_d_1 * shared->dim_life_expec_d_2;
   shared->dim_vacc_noncov = shared->dim_vacc_noncov_1 * shared->dim_vacc_noncov_2;
   shared->dim_vacc_noncov_S = shared->dim_vacc_noncov_S_1 * shared->dim_vacc_noncov_S_2;
   for (int i = 1; i <= shared->N_age; ++i) {
@@ -10426,7 +10426,6 @@ dust::pars_type<model> dust_pars<model>(cpp11::list user) {
   shared->max_rel_year = shared->LAST_YEAR - shared->FIRST_YEAR;
   shared->nu = shared->DT / (real_type) shared->dur_cross_prot;
   shared->phi_ed = shared->phi_dis_enhance - 1;
-  shared->pop_size_d = user_get_array_fixed<real_type, 1>(user, "pop_size_d", shared->pop_size_d, {shared->dim_pop_size_d}, NA_REAL, NA_REAL);
   shared->sdis_pri = user_get_array_fixed<real_type, 1>(user, "sdis_pri", shared->sdis_pri, {shared->dim_sdis_pri}, NA_REAL, NA_REAL);
   shared->sdis_quart = user_get_array_fixed<real_type, 1>(user, "sdis_quart", shared->sdis_quart, {shared->dim_sdis_quart}, NA_REAL, NA_REAL);
   shared->sdis_sec = user_get_array_fixed<real_type, 1>(user, "sdis_sec", shared->sdis_sec, {shared->dim_sdis_sec}, NA_REAL, NA_REAL);
@@ -10436,14 +10435,11 @@ dust::pars_type<model> dust_pars<model>(cpp11::list user) {
   shared->vca = shared->VaccRoutineAge;
   shared->ws = user_get_array_fixed<real_type, 1>(user, "ws", shared->ws, {shared->dim_ws}, NA_REAL, NA_REAL);
   shared->year_calib = 1 + shared->CALIB_YEAR - shared->FIRST_YEAR;
-  shared->age_rate_d = user_get_array_fixed<real_type, 2>(user, "age_rate_d", shared->age_rate_d, {shared->dim_age_rate_d_1, shared->dim_age_rate_d_2}, NA_REAL, NA_REAL);
-  shared->age_removal_d = user_get_array_fixed<real_type, 2>(user, "age_removal_d", shared->age_removal_d, {shared->dim_age_removal_d_1, shared->dim_age_removal_d_2}, NA_REAL, NA_REAL);
   shared->births_d = user_get_array_fixed<real_type, 2>(user, "births_d", shared->births_d, {shared->dim_births_d_1, shared->dim_births_d_2}, NA_REAL, NA_REAL);
   shared->coverage_d = user_get_array_fixed<real_type, 2>(user, "coverage_d", shared->coverage_d, {shared->dim_coverage_d_1, shared->dim_coverage_d_2}, NA_REAL, NA_REAL);
   shared->Kc_mean = shared->Mwt * shared->delta * (dust::math::pow((shared->epsilon * (shared->gamma - shared->delta) / (real_type) (shared->delta * shared->sigma) - 1), (- 1 / (real_type) shared->omega))) / (real_type) shared->epsilon;
   shared->L_dis = user_get_array_fixed<real_type, 2>(user, "L_dis", shared->L_dis, {shared->dim_L_dis_1, shared->dim_L_dis_2}, NA_REAL, NA_REAL);
   shared->L_sdis = user_get_array_fixed<real_type, 2>(user, "L_sdis", shared->L_sdis, {shared->dim_L_sdis_1, shared->dim_L_sdis_2}, NA_REAL, NA_REAL);
-  shared->life_expec_d = user_get_array_fixed<real_type, 2>(user, "life_expec_d", shared->life_expec_d, {shared->dim_life_expec_d_1, shared->dim_life_expec_d_2}, NA_REAL, NA_REAL);
   shared->nc0 = user_get_array_fixed<real_type, 2>(user, "nc0", shared->nc0, {shared->dim_nc0_1, shared->dim_nc0_2}, NA_REAL, NA_REAL);
   shared->nc50_dis = user_get_array_fixed<real_type, 2>(user, "nc50_dis", shared->nc50_dis, {shared->dim_nc50_dis_1, shared->dim_nc50_dis_2}, NA_REAL, NA_REAL);
   shared->nc50_sdis = user_get_array_fixed<real_type, 2>(user, "nc50_sdis", shared->nc50_sdis, {shared->dim_nc50_sdis_1, shared->dim_nc50_sdis_2}, NA_REAL, NA_REAL);
@@ -10453,13 +10449,6 @@ dust::pars_type<model> dust_pars<model>(cpp11::list user) {
   shared->vacc_child_age = (shared->vca == 0 ? shared->N_age_p1 : shared->vca);
   shared->vacc_child_stoptime = shared->vacc_child_starttime + shared->VACC_END_YEAR - shared->VACC_YEAR;
   shared->vacc_cu_time = shared->vacc_child_starttime;
-  for (int i = 1; i <= shared->N_age; ++i) {
-    shared->init_life_expec[i - 1] = shared->life_expec_d[shared->dim_life_expec_d_1 * (1 + i - 1) + static_cast<int>(shared->year_calib) - 1];
-  }
-  shared->init_lifespan = shared->life_expec_d[shared->dim_life_expec_d_1 * 1 + static_cast<int>(shared->year_calib) - 1];
-  for (int i = 1; i <= shared->N_age; ++i) {
-    shared->N_init_age0[i - 1] = shared->pop_size_d[i + 1 - 1];
-  }
   for (int i = 1; i <= shared->N_age; ++i) {
     shared->nc50_age[i - 1] = (i < 6 ? dust::math::exp(shared->nc50_age_under6) : 1);
   }
@@ -10475,38 +10464,49 @@ dust::pars_type<model> dust_pars<model>(cpp11::list user) {
   for (int i = 1; i <= 4; ++i) {
     shared->phi_tert[i - 1] = shared->phi_scale[i - 1];
   }
+  shared->pop_size_d = user_get_array_fixed<real_type, 1>(user, "pop_size_d", shared->pop_size_d, {shared->dim_pop_size_d}, NA_REAL, NA_REAL);
   shared->vacc_cu_rndtime = dust::math::floor(shared->vacc_cu_time * shared->YL / (real_type) shared->age_per) * shared->age_per + 1;
+  shared->age_rate_d = user_get_array_fixed<real_type, 2>(user, "age_rate_d", shared->age_rate_d, {shared->dim_age_rate_d_1, shared->dim_age_rate_d_2}, NA_REAL, NA_REAL);
+  shared->age_removal_d = user_get_array_fixed<real_type, 2>(user, "age_removal_d", shared->age_removal_d, {shared->dim_age_removal_d_1, shared->dim_age_removal_d_2}, NA_REAL, NA_REAL);
+  shared->life_expec_d = user_get_array_fixed<real_type, 2>(user, "life_expec_d", shared->life_expec_d, {shared->dim_life_expec_d_1, shared->dim_life_expec_d_2}, NA_REAL, NA_REAL);
+  for (int i = 1; i <= shared->N_age; ++i) {
+    shared->N_init_age0[i - 1] = shared->pop_size_d[i + 1 - 1];
+  }
+  for (int i = 1; i <= shared->N_age; ++i) {
+    shared->init_life_expec[i - 1] = shared->life_expec_d[shared->dim_life_expec_d_1 * (1 + i - 1) + static_cast<int>(shared->year_calib) - 1];
+  }
+  shared->init_lifespan = shared->life_expec_d[shared->dim_life_expec_d_1 * 1 + static_cast<int>(shared->year_calib) - 1];
   shared->N_init = odin_sum1<real_type>(shared->N_init_age0.data(), 0, shared->dim_N_init_age0);
+  shared->pop_scale = (shared->N_sim <= 0 ? 1 : shared->N_sim / (real_type) shared->N_init);
   for (int i = 1; i <= shared->N_age; ++i) {
     shared->suscinitpop[i - 1] = shared->FOIas[i - 1] * shared->init_life_expec[i - 1];
   }
-  shared->pop_scale = (shared->N_sim <= 0 ? 1 : shared->N_sim / (real_type) shared->N_init);
-  shared->R0agescale = odin_sum1<real_type>(shared->init_life_expec.data(), 0, shared->dim_init_life_expec) / (real_type) odin_sum1<real_type>(shared->suscinitpop.data(), 0, shared->dim_suscinitpop);
-  shared->Beta_hm = shared->R0agescale * shared->R0_req / (real_type) (shared->kappa * shared->kappa * shared->Mwt * shared->inf_per * shared->Beta_mh_mean / (real_type) (1 + shared->delta * shared->eip) / (real_type) shared->delta);
   for (int i = 1; i <= shared->N_age; ++i) {
     shared->N_init_age[i - 1] = shared->pop_size_d[i + 1 - 1] * shared->pop_scale;
   }
-  shared->Beta_hm_1 = shared->Beta_hm * shared->Rel_R01;
-  shared->Beta_hm_2 = shared->Beta_hm * shared->Rel_R02;
-  shared->Beta_hm_3 = shared->Beta_hm * shared->Rel_R03;
-  shared->Beta_hm_4 = shared->Beta_hm * shared->Rel_R04;
+  shared->R0agescale = odin_sum1<real_type>(shared->init_life_expec.data(), 0, shared->dim_init_life_expec) / (real_type) odin_sum1<real_type>(shared->suscinitpop.data(), 0, shared->dim_suscinitpop);
+  shared->Beta_hm = shared->R0agescale * shared->R0_req / (real_type) (shared->kappa * shared->kappa * shared->Mwt * shared->inf_per * shared->Beta_mh_mean / (real_type) (1 + shared->delta * shared->eip) / (real_type) shared->delta);
   shared->initial_NT_out = odin_sum1<real_type>(shared->N_init_age.data(), 0, shared->dim_N_init_age);
   shared->initial_NTnv_out = odin_sum1<real_type>(shared->N_init_age.data(), 0, shared->dim_N_init_age);
   for (int i = 1; i <= shared->N_age; ++i) {
     shared->initial_Ntotal_out[i - 1] = shared->N_init_age[i - 1];
   }
   shared->N_eq = odin_sum1<real_type>(shared->N_init_age.data(), 0, shared->dim_N_init_age);
+  shared->Beta_hm_1 = shared->Beta_hm * shared->Rel_R01;
+  shared->Beta_hm_2 = shared->Beta_hm * shared->Rel_R02;
+  shared->Beta_hm_3 = shared->Beta_hm * shared->Rel_R03;
+  shared->Beta_hm_4 = shared->Beta_hm * shared->Rel_R04;
   shared->initial_Lwt = shared->Mwt * shared->N_eq * shared->delta / (real_type) shared->epsilon;
   shared->initial_Mwt_I1 = dust::math::floor(shared->Mwt * shared->N_eq * static_cast<real_type>(5.0000000000000002e-05));
   shared->initial_Mwt_I2 = dust::math::floor(shared->Mwt * shared->N_eq * static_cast<real_type>(6.0000000000000002e-05));
   shared->initial_Mwt_I3 = dust::math::floor(shared->Mwt * shared->N_eq * static_cast<real_type>(6.9999999999999994e-05));
   shared->initial_Mwt_I4 = dust::math::floor(shared->Mwt * shared->N_eq * static_cast<real_type>(8.0000000000000007e-05));
   shared->initial_Mwt_S = shared->Mwt * shared->N_eq * static_cast<real_type>(0.99970000000000003);
+  shared->Wb_introrate = shared->Wb_introlevel * shared->Mwt * shared->N_eq * shared->DT / (real_type) shared->Wb_introduration;
   shared->R0_1 = shared->kappa * shared->kappa * shared->Mwt * shared->Beta_hm_1 * shared->inf_per * shared->Beta_mh_mean / (real_type) (1 + shared->delta * shared->eip) / (real_type) shared->delta / (real_type) shared->R0agescale;
   shared->R0_2 = shared->kappa * shared->kappa * shared->Mwt * shared->Beta_hm_2 * shared->inf_per * shared->Beta_mh_mean / (real_type) (1 + shared->delta * shared->eip) / (real_type) shared->delta / (real_type) shared->R0agescale;
   shared->R0_3 = shared->kappa * shared->kappa * shared->Mwt * shared->Beta_hm_3 * shared->inf_per * shared->Beta_mh_mean / (real_type) (1 + shared->delta * shared->eip) / (real_type) shared->delta / (real_type) shared->R0agescale;
   shared->R0_4 = shared->kappa * shared->kappa * shared->Mwt * shared->Beta_hm_4 * shared->inf_per * shared->Beta_mh_mean / (real_type) (1 + shared->delta * shared->eip) / (real_type) shared->delta / (real_type) shared->R0agescale;
-  shared->Wb_introrate = shared->Wb_introlevel * shared->Mwt * shared->N_eq * shared->DT / (real_type) shared->Wb_introduration;
   shared->eq_FOI1 = shared->R0_1 / (real_type) shared->init_lifespan;
   shared->eq_FOI2 = shared->R0_2 / (real_type) shared->init_lifespan;
   shared->eq_FOI3 = shared->R0_3 / (real_type) shared->init_lifespan;

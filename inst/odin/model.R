@@ -113,7 +113,7 @@
   ## year used to calibrate R0 (for age-dependent exposure)
   year_calib <- 1+CALIB_YEAR-FIRST_YEAR
   
-  death[1:28] <- age_removal_d[as.integer(year_row),1+i]
+  death[1:N_age] <- age_removal_d[as.integer(year_row),1+i]
   ## correction for first year to allow for continuous births
   death[1] <- 0.4691*death[1]*death[1]+1.9686*death[1]
   ## change time units to days
@@ -1879,11 +1879,11 @@
 ## array dimension
   
 
-  dim(age_removal_d) <- c(151,29)
-  dim(age_rate_d) <-  c(151,29)
-  dim(pop_size_d) <-  29
+  dim(age_removal_d) <- c(151,N_age_p1)
+  dim(age_rate_d) <-  c(151,N_age_p1)
+  dim(pop_size_d) <-  N_age_p1
   dim(births_d) <- c(151,2)
-  dim(life_expec_d) <-  c(151,29)
+  dim(life_expec_d) <-  c(151,N_age_p1)
   dim(coverage_d) <- c(77,2)
   
   dim(nc0) <- c(4,3)
