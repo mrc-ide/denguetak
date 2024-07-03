@@ -41,6 +41,13 @@ extern "C" SEXP _denguetak_dust_cpu_model_simulate(SEXP ptr, SEXP time_end) {
   END_CPP11
 }
 // model.cpp
+SEXP dust_cpu_model_run_adjoint(SEXP ptr);
+extern "C" SEXP _denguetak_dust_cpu_model_run_adjoint(SEXP ptr) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(dust_cpu_model_run_adjoint(cpp11::as_cpp<cpp11::decay_t<SEXP>>(ptr)));
+  END_CPP11
+}
+// model.cpp
 SEXP dust_cpu_model_set_index(SEXP ptr, cpp11::sexp r_index);
 extern "C" SEXP _denguetak_dust_cpu_model_set_index(SEXP ptr, SEXP r_index) {
   BEGIN_CPP11
@@ -161,6 +168,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_denguetak_dust_cpu_model_resample",                (DL_FUNC) &_denguetak_dust_cpu_model_resample,                2},
     {"_denguetak_dust_cpu_model_rng_state",               (DL_FUNC) &_denguetak_dust_cpu_model_rng_state,               3},
     {"_denguetak_dust_cpu_model_run",                     (DL_FUNC) &_denguetak_dust_cpu_model_run,                     2},
+    {"_denguetak_dust_cpu_model_run_adjoint",             (DL_FUNC) &_denguetak_dust_cpu_model_run_adjoint,             1},
     {"_denguetak_dust_cpu_model_set_data",                (DL_FUNC) &_denguetak_dust_cpu_model_set_data,                3},
     {"_denguetak_dust_cpu_model_set_index",               (DL_FUNC) &_denguetak_dust_cpu_model_set_index,               2},
     {"_denguetak_dust_cpu_model_set_n_threads",           (DL_FUNC) &_denguetak_dust_cpu_model_set_n_threads,           2},

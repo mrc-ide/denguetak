@@ -72,6 +72,7 @@
   hs[] <- user() # Ab fast decay rate (by serostatus) - rate not half life
   hl[] <- user() # Ab slow decay rate (by serostatus)
   ts[] <- user() # Ab decay fast-slow transition time (by serostatus)
+  nc50_inf[,] <- user() # Ab n50 for dis (by serotype and serostatus)  
   nc50_dis[,] <- user() # Ab n50 for dis (by serotype and serostatus)
   nc50_sdis[,] <- user() # Ab n50 for sdis (by serotype and serostatus)
   L_dis[,] <- user() # enhancement for symp dis (by serotype and serostatus)
@@ -320,11 +321,11 @@
   ## If DoVEInf=1, assume that VE(inf) = sqrt of total protection, with all enhancement in VE(dis|inf)
   ## This is approximately consistent with findings of https://pubmed.ncbi.nlm.nih.gov/27418050/
   
-  RR_inf_vc[1:4,1,1:N_age] <- if((ZeroVE==0) && (DoVEInf)) 1/(1+(nc[i,j,k]/(12*nc50_dis[i,j]*nc50_age[k]))^ws[i]) else 1
-  RR_inf_cu[1:4,1,1:N_age] <- if((ZeroVE==0) && (DoVEInf) && (ageb[k]>=youngest_cu_age) && (ageb[k]<=oldest_cu_age)) 1/(1+(nc_cu[i,j]/(12*nc50_dis[i,j]*nc50_age[k]))^ws[i]) else 1
+  RR_inf_vc[1:4,1,1:N_age] <- if((ZeroVE==0) && (DoVEInf)) 1/(1+(nc[i,j,k]/(nc50_inf[i,j]*nc50_age[k]))^ws[i]) else 1
+  RR_inf_cu[1:4,1,1:N_age] <- if((ZeroVE==0) && (DoVEInf) && (ageb[k]>=youngest_cu_age) && (ageb[k]<=oldest_cu_age)) 1/(1+(nc_cu[i,j]/(nc50_inf[i,j]*nc50_age[k]))^ws[i]) else 1
   
-  RR_inf_vc[1:4,2:3,1:N_age] <- if((ZeroVE==0) && (DoVEInf)) 1/(1+(nc[i,j,k]/(3*nc50_dis[i,j]*nc50_age[k]))^ws[i]) else 1
-  RR_inf_cu[1:4,2:3,1:N_age] <- if((ZeroVE==0) && (DoVEInf) && (ageb[k]>=youngest_cu_age) && (ageb[k]<=oldest_cu_age)) 1/(1+(nc_cu[i,j]/(3*nc50_dis[i,j]*nc50_age[k]))^ws[i]) else 1
+  RR_inf_vc[1:4,2:3,1:N_age] <- if((ZeroVE==0) && (DoVEInf)) 1/(1+(nc[i,j,k]/(nc50_inf[i,j]*nc50_age[k]))^ws[i]) else 1
+  RR_inf_cu[1:4,2:3,1:N_age] <- if((ZeroVE==0) && (DoVEInf) && (ageb[k]>=youngest_cu_age) && (ageb[k]<=oldest_cu_age)) 1/(1+(nc_cu[i,j]/(nc50_inf[i,j]*nc50_age[k]))^ws[i]) else 1
   
   RR_dis_vc[1:4,1:3,1:N_age] <- if(ZeroVE==1) 1 else (L_dis[i,j]/(1+(nc[i,j,k]/(nc50_dis[i,j]*nc50_age[k]))^ws[i]))/RR_inf_vc[i,j,k] 
   RR_sdis_vc[1:4,1:3,1:N_age] <- if(ZeroVE==1) 1 else L_sdis[i,j]/(1+(nc[i,j,k]/(nc50_sdis[i,j]*nc50_age[k]))^ws[i])/RR_inf_vc[i,j,k]
@@ -1890,6 +1891,7 @@
   dim(hs) <- 3
   dim(hl) <- 3
   dim(ts) <- 3
+  dim(nc50_inf) <- c(4,3)
   dim(nc50_dis) <- c(4,3)
   dim(nc50_sdis) <- c(4,3)
   dim(L_dis) <- c(4,3)

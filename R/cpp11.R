@@ -20,6 +20,10 @@ dust_cpu_model_simulate <- function(ptr, time_end) {
   .Call(`_denguetak_dust_cpu_model_simulate`, ptr, time_end)
 }
 
+dust_cpu_model_run_adjoint <- function(ptr) {
+  .Call(`_denguetak_dust_cpu_model_run_adjoint`, ptr)
+}
+
 dust_cpu_model_set_index <- function(ptr, r_index) {
   .Call(`_denguetak_dust_cpu_model_set_index`, ptr, r_index)
 }
